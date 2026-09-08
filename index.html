@@ -7,7 +7,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-    import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDL1DGvn0IHZi5WVcPBOUuN_7cqEo__7So",
@@ -355,36 +355,6 @@
       .sidebar{max-width:none; display:flex; flex-wrap:wrap;}
       .nav-btn{flex:1; text-align:center;}
     }
-
-    /* ===== SMART ANALYTICS ===== */
-    .analytics-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px;}
-    .analytics-kpi{background:#f7f9fc;border:1px solid #edf0f4;border-radius:10px;padding:10px;}
-    .analytics-kpi .k-label{font-size:.72rem;color:#666;}
-    .analytics-kpi .k-value{font-size:1.18rem;font-weight:800;margin-top:2px;color:#222;}
-    .analytics-kpi .k-sub{font-size:.7rem;color:#666;margin-top:2px;}
-    .analytics-positive{color:#2e7d32!important}.analytics-negative{color:#c62828!important}
-    .analytics-toolbar{display:flex;flex-wrap:wrap;gap:6px;align-items:end}
-    .analytics-toolbar .field{flex:1;min-width:125px}
-    .analytics-toolbar .field label{margin-top:0}
-    .analytics-section{background:#fff;border:1px solid #edf0f4;border-radius:10px;padding:10px;margin-top:8px;}
-    .analytics-title{font-weight:800;font-size:.9rem;color:#333;margin-bottom:7px}
-    .bar-chart{display:flex;align-items:flex-end;gap:5px;height:165px;padding:8px 2px 20px;overflow-x:auto;border-bottom:1px solid #ddd}
-    .bar-wrap{min-width:34px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px}
-    .bar{width:24px;min-height:2px;background:#E52420;border-radius:5px 5px 0 0}
-    .bar-label{font-size:.62rem;color:#666;white-space:nowrap;transform:rotate(-35deg);transform-origin:center}
-    .bar-value{font-size:.6rem;color:#555;white-space:nowrap}
-    .metric-bars{display:flex;flex-direction:column;gap:6px}
-    .metric-row{display:grid;grid-template-columns:minmax(100px,1fr) 3fr 70px;gap:6px;align-items:center;font-size:.72rem}
-    .metric-track{height:9px;background:#edf0f4;border-radius:99px;overflow:hidden}
-    .metric-fill{height:100%;background:#E52420;border-radius:99px}
-    .analytics-badge{display:inline-block;padding:2px 7px;border-radius:999px;background:#f1f3f7;font-size:.68rem;margin-right:4px}
-    .analytics-alert{border-left:4px solid #f57c00;background:#fff8ef;padding:7px;border-radius:6px;margin-top:5px;font-size:.76rem}
-    .analytics-good{border-left-color:#2e7d32;background:#f1f8f2}
-    .analytics-danger{border-left-color:#c62828;background:#fff1f2}
-    .analytics-table-wrap{overflow:auto;max-height:380px}
-    .analytics-table{min-width:620px}
-    @media(max-width:900px){.analytics-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
-    @media(max-width:500px){.analytics-grid{grid-template-columns:1fr 1fr}.analytics-kpi .k-value{font-size:1rem}.metric-row{grid-template-columns:90px 1fr 58px}}
   </style>
 </head>
 <body>
@@ -823,32 +793,26 @@
             </div>
           </div>
 
-          <!-- REPORTES / ANALÍTICA -->
+          <!-- REPORTES -->
           <div id="sec-reportes" class="card" style="display:none;">
             <div class="card-header">
-              <div>
-                <div class="card-title">Analítica inteligente del PDV</div>
-                <div class="small">Toda la información sale de las ventas, inventario, compras, caja, usuarios y clientes del propio PDV.</div>
-              </div>
+              <div class="card-title">Reportes</div>
+              <div class="small">Resumen de ventas y mejores productos.</div>
             </div>
-
-            <div class="analytics-toolbar">
-              <div class="field">
+            <div class="row">
+              <div class="col-2">
                 <label>Desde</label>
                 <input id="repDesde" type="date">
               </div>
-              <div class="field">
+              <div class="col-2">
                 <label>Hasta</label>
                 <input id="repHasta" type="date">
               </div>
-              <button class="btn-ghost" onclick="analyticsPreset(7)">7 días</button>
-              <button class="btn-ghost" onclick="analyticsPreset(30)">30 días</button>
-              <button class="btn-ghost" onclick="analyticsPreset(90)">90 días</button>
-              <button onclick="calcularReportes()">Actualizar análisis</button>
-              <button class="btn-success" onclick="exportarAnaliticaCSV()">Exportar CSV</button>
             </div>
-
-            <div id="repContenido" class="mt-8"></div>
+            <div class="mt-4 row">
+              <button class="btn-ghost" onclick="calcularReportes()">Ver reporte</button>
+            </div>
+            <div class="mt-8" id="repContenido"></div>
           </div>
 
           <!-- USUARIOS -->
@@ -1193,6 +1157,7 @@
 
     async function loadData(){
       let cargadoDesdeNube = false;
+
       if(window.firebaseListo && window.tiendaCodigo){
         try{
           const remoto = await window.fbGetTienda(window.tiendaCodigo);
@@ -1205,26 +1170,28 @@
             if(remoto.clientes) ST.clientes = remoto.clientes;
             if(remoto.proveedores) ST.proveedores = remoto.proveedores;
             cargadoDesdeNube = true;
+            // Refresca la copia local con lo que vino de la nube
             try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(ST)); }catch(e){}
           }
         }catch(e){
           console.error('No se pudo cargar desde la nube, se usará la copia local:', e);
         }
       }
+
       if(!cargadoDesdeNube){
-      try{
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if(raw){
-          const obj = JSON.parse(raw);
-          if(obj.productos) ST.productos = obj.productos;
-          if(obj.ventas) ST.ventas = obj.ventas;
-          if(obj.caja) ST.caja = obj.caja;
-          if(obj.usuarios) ST.usuarios = obj.usuarios;
-          if(obj.compras) ST.compras = obj.compras;
-          if(obj.clientes) ST.clientes = obj.clientes;
-          if(obj.proveedores) ST.proveedores = obj.proveedores;
-        }
-      }catch(e){}
+        try{
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if(raw){
+            const obj = JSON.parse(raw);
+            if(obj.productos) ST.productos = obj.productos;
+            if(obj.ventas) ST.ventas = obj.ventas;
+            if(obj.caja) ST.caja = obj.caja;
+            if(obj.usuarios) ST.usuarios = obj.usuarios;
+            if(obj.compras) ST.compras = obj.compras;
+            if(obj.clientes) ST.clientes = obj.clientes;
+            if(obj.proveedores) ST.proveedores = obj.proveedores;
+          }
+        }catch(e){}
       }
       if(!ST.productos.length){
         ST.productos = [
@@ -1707,10 +1674,13 @@ function autocompletarProductoCompra(){
 }
 
 let _syncNubeTimeout = null;
-function saveData(){
+    function saveData(){
       try{
         localStorage.setItem(STORAGE_KEY, JSON.stringify(ST));
       }catch(e){}
+
+      // Sincroniza a la nube sin saturar Firebase: espera 800ms de
+      // inactividad antes de mandar los datos.
       if(window.firebaseListo && window.tiendaCodigo){
         clearTimeout(_syncNubeTimeout);
         _syncNubeTimeout = setTimeout(()=>{
@@ -1852,9 +1822,6 @@ function appLogin(){
       }else if(section === 'productos'){
         renderProductos();
         renderAjustesInventario();
-      }else if(section === 'reportes'){
-        analyticsPreset(30);
-        calcularReportes();
       }
     }
 
@@ -2213,17 +2180,12 @@ function appLogin(){
                 'Crédito',
         total,
         estado: 'activa',
-        items: carrito.map(i=>{
-          const prodSnap = ST.productos.find(p=>p.codigo===i.codigo) || {};
-          return {
-            codigo:i.codigo,
-            nombre:i.nombre,
-            precio:i.precio,
-            costo: Number(prodSnap.costo||0),
-            qty:i.qty,
-            subtotal: (Number(i.precio)||0) * (Number(i.qty)||0)
-          };
-        }),
+        items: carrito.map(i=>({
+          codigo:i.codigo,
+          nombre:i.nombre,
+          precio:i.precio,
+          qty:i.qty
+        })),
         detallePago: {}
       };
 
@@ -2296,6 +2258,7 @@ function appLogin(){
       }
     }
 
+    let editandoProductoCodigo = null;
     function guardarProducto(){
       const codigo = (document.getElementById('prodCodigo').value||'').trim();
       const nombre = (document.getElementById('prodNombre').value||'').trim();
@@ -2307,6 +2270,10 @@ function appLogin(){
         return;
       }
       let prod = ST.productos.find(p=>p.codigo===codigo);
+      if(prod && editandoProductoCodigo !== codigo){
+        showToast('Ese código ya existe: ' + prod.nombre + '. Búscalo y edítalo si quieres cambiarlo.');
+        return;
+      }
       if(!prod){
         prod = {codigo,nombre,precio:precio,costo:costo||0,stock:stock||0};
         ST.productos.push(prod);
@@ -2316,12 +2283,15 @@ function appLogin(){
         prod.costo = costo||0;
         prod.stock = stock;
       }
+      editandoProductoCodigo = null;
       saveData();
       renderProductos();
       renderProductosVenta();
       showToast('Producto guardado.');
+      limpiarFormProducto();
     }
     function limpiarFormProducto(){
+      editandoProductoCodigo = null;
       document.getElementById('prodCodigo').value='';
       document.getElementById('prodNombre').value='';
       document.getElementById('prodCosto').value='';
@@ -2331,6 +2301,7 @@ function appLogin(){
     function editarProducto(codigo){
       const p = ST.productos.find(x=>x.codigo===codigo);
       if(!p) return;
+      editandoProductoCodigo = p.codigo;
       document.getElementById('prodCodigo').value = p.codigo;
       document.getElementById('prodNombre').value = p.nombre;
       document.getElementById('prodCosto').value = p.costo||0;
@@ -2759,231 +2730,116 @@ function appLogin(){
       bloqueoRetiroSeguridad = true;
       abrirModalRetiroSeguridad(saldo);
     }
-function analyticsMoney(n){
-      return '$'+(Number(n)||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
-    }
-    function analyticsEsc(v){
-      return String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-    }
-    function analyticsDate(d){
-      const x = new Date(d+'T12:00:00');
-      return x.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit'});
-    }
-    function analyticsPct(n){
-      return (Number(n)||0).toLocaleString('es-MX',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
-    }
-    function analyticsGetRange(){
-      let d1=document.getElementById('repDesde').value;
-      let d2=document.getElementById('repHasta').value;
-      if(!d1 || !d2){
-        const hoy=new Date();
-        d2=hoy.toISOString().slice(0,10);
-        hoy.setDate(hoy.getDate()-29);
-        d1=hoy.toISOString().slice(0,10);
-        document.getElementById('repDesde').value=d1;
-        document.getElementById('repHasta').value=d2;
+function calcularReportes(){
+      const desde = document.getElementById('repDesde').value;
+      const hasta = document.getElementById('repHasta').value;
+      if(!desde || !hasta){
+        showToast('Selecciona rango de fechas.');
+        return;
       }
-      if(d1>d2){const t=d1;d1=d2;d2=t;}
-      return {d1,d2};
-    }
-    function analyticsPreset(days){
-      const hasta=new Date();
-      const desde=new Date();
-      desde.setDate(hasta.getDate()-(days-1));
-      document.getElementById('repDesde').value=desde.toISOString().slice(0,10);
-      document.getElementById('repHasta').value=hasta.toISOString().slice(0,10);
-    }
-    function analyticsDays(d1,d2){
-      const out=[]; let d=new Date(d1+'T12:00:00'); const end=new Date(d2+'T12:00:00');
-      while(d<=end){out.push(d.toISOString().slice(0,10));d.setDate(d.getDate()+1);}
-      return out;
-    }
-    function analyticsRenderBars(data, valueKey, money=false){
-      const vals=data.map(x=>Number(x[valueKey])||0), max=Math.max(...vals,1);
-      return '<div class="bar-chart">'+data.map(x=>{
-        const val=Number(x[valueKey])||0;
-        const h=Math.max(2,(val/max)*120);
-        return `<div class="bar-wrap" title="${analyticsEsc(x.label)}: ${money?analyticsMoney(val):val.toLocaleString('es-MX')}">
-          <div class="bar-value">${money?analyticsMoney(val):val}</div><div class="bar" style="height:${h}px"></div><div class="bar-label">${analyticsEsc(x.short||x.label)}</div>
-        </div>`;
-      }).join('')+'</div>';
-    }
-    function analyticsRenderMetricBars(rows, labelKey, valueKey, money){
-      const max=Math.max(...rows.map(r=>Number(r[valueKey])||0),1);
-      return '<div class="metric-bars">'+rows.map(r=>{
-        const v=Number(r[valueKey])||0;
-        return `<div class="metric-row"><div>${analyticsEsc(r[labelKey])}</div><div class="metric-track"><div class="metric-fill" style="width:${Math.max(1,v/max*100)}%"></div></div><div class="text-right">${money?analyticsMoney(v):v.toLocaleString('es-MX')}</div></div>`;
-      }).join('')+'</div>';
-    }
-
-    function calcularReportes(){
-      const range=analyticsGetRange(), d1=range.d1, d2=range.d2;
-      const cont=document.getElementById('repContenido');
-      if(!cont) return;
-      const ventas=(ST.ventas||[]).filter(v=>v.fecha>=d1&&v.fecha<=d2&&v.estado!=='anulada');
-      const anuladas=(ST.ventas||[]).filter(v=>v.fecha>=d1&&v.fecha<=d2&&v.estado==='anulada');
-
-      const total=ventas.reduce((a,v)=>a+(Number(v.total)||0),0);
-      const tickets=ventas.length;
-      const unidades=ventas.reduce((a,v)=>a+(v.items||[]).reduce((b,it)=>b+(Number(it.qty)||0),0),0);
-      let utilidad=0, costoVentas=0;
-      const productos={}, metodos={}, usuarios={}, clientes={};
-      ventas.forEach(v=>{
-        const metodo=v.metodo||'Otro';
-        if(!metodos[metodo])metodos[metodo]={monto:0,tickets:0};
-        metodos[metodo].monto+=Number(v.total)||0; metodos[metodo].tickets++;
-        const usr=v.usuario||'Sin usuario';
-        if(!usuarios[usr])usuarios[usr]={monto:0,tickets:0};
-        usuarios[usr].monto+=Number(v.total)||0; usuarios[usr].tickets++;
-        if(v.clienteNombre){
-          if(!clientes[v.clienteNombre])clientes[v.clienteNombre]={monto:0,tickets:0};
-          clientes[v.clienteNombre].monto+=Number(v.total)||0; clientes[v.clienteNombre].tickets++;
-        }
-        (v.items||[]).forEach(it=>{
-          const prod=ST.productos.find(p=>p.codigo===it.codigo)||{};
-          const costo=Number(typeof it.costo!=='undefined'?it.costo:prod.costo)||0;
-          const qty=Number(it.qty)||0, precio=Number(it.precio)||0;
-          const ingreso=qty*precio, costoItem=qty*costo, util=ingreso-costoItem;
-          costoVentas+=costoItem; utilidad+=util;
-          const key=it.codigo||it.nombre||'sin-codigo';
-          if(!productos[key])productos[key]={codigo:key,nombre:it.nombre||prod.nombre||key,cant:0,ingreso:0,costo:0,utilidad:0};
-          productos[key].cant+=qty; productos[key].ingreso+=ingreso; productos[key].costo+=costoItem; productos[key].utilidad+=util;
-        });
-      });
-      const margen=total>0?utilidad/total*100:0;
-      const ticketProm=tickets?total/tickets:0;
-      const invValue=(ST.productos||[]).reduce((a,p)=>a+(Number(p.stock)||0)*(Number(p.costo)||0),0);
-      const comprasRango=(ST.compras||[]).filter(c=>c.fecha>=d1&&c.fecha<=d2);
-      const comprasTotal=comprasRango.reduce((a,c)=>a+(Number(c.total)||0),0);
-      const stockBajo=(ST.productos||[]).filter(p=>(Number(p.stock)||0)<=5);
-      const stockMedio=(ST.productos||[]).filter(p=>(Number(p.stock)||0)>5&&(Number(p.stock)||0)<=10);
-
-      // Comparación contra el periodo anterior de igual duración.
-      const days=analyticsDays(d1,d2).length;
-      const prevEnd=new Date(d1+'T12:00:00'); prevEnd.setDate(prevEnd.getDate()-1);
-      const prevStart=new Date(prevEnd); prevStart.setDate(prevStart.getDate()-(days-1));
-      const pd1=prevStart.toISOString().slice(0,10), pd2=prevEnd.toISOString().slice(0,10);
-      const prevVentas=(ST.ventas||[]).filter(v=>v.fecha>=pd1&&v.fecha<=pd2&&v.estado!=='anulada');
-      const prevTotal=prevVentas.reduce((a,v)=>a+(Number(v.total)||0),0);
-      const variacion=prevTotal?((total-prevTotal)/prevTotal*100):null;
-
-      const dias=analyticsDays(d1,d2);
-      const porDia=dias.map(day=>{
-        const vv=ventas.filter(v=>v.fecha===day);
-        return {label:day,short:analyticsDate(day),ventas:vv.reduce((a,v)=>a+(Number(v.total)||0),0),tickets:vv.length};
-      });
-      const porHora=Array.from({length:24},(_,h)=>({h, label:String(h).padStart(2,'0')+':00', ventas:0,tickets:0}));
-      ventas.forEach(v=>{
-        const h=parseInt((v.hora||'0').split(':')[0],10);
-        if(!isNaN(h)&&porHora[h]){porHora[h].ventas+=Number(v.total)||0;porHora[h].tickets++;}
-      });
-      const horasActivas=porHora.filter(x=>x.tickets>0);
-
-      const topIngreso=Object.values(productos).sort((a,b)=>b.ingreso-a.ingreso).slice(0,10);
-      const topUtil=Object.values(productos).sort((a,b)=>b.utilidad-a.utilidad).slice(0,10);
-      const topQty=Object.values(productos).sort((a,b)=>b.cant-a.cant).slice(0,10);
-      const lento=Object.values(productos).filter(p=>p.cant===0);
-      const pagoRows=Object.entries(metodos).sort((a,b)=>b[1].monto-a[1].monto).map(([k,v])=>({label:k,value:v.monto}));
-      const userRows=Object.entries(usuarios).sort((a,b)=>b[1].monto-a[1].monto).map(([k,v])=>({label:k,value:v.monto,tickets:v.tickets}));
-      const customerRows=Object.entries(clientes).sort((a,b)=>b[1].monto-a[1].monto).slice(0,10);
-
-      let recomend=[];
-      if(stockBajo.length) recomend.push({c:'analytics-danger',t:`${stockBajo.length} producto(s) con stock crítico (≤5). Revisa reposición antes de quedarte sin existencias.`});
-      if(lento.length) recomend.push({c:'analytics-alert',t:`${lento.length} producto(s) del catálogo no tuvieron ventas en el periodo. Considera promoción, cambio de precio o revisar si siguen siendo necesarios.`});
-      if(margen<20&&total>0) recomend.push({c:'analytics-alert',t:`El margen bruto estimado del periodo es ${analyticsPct(margen)}. Revisa costos, precios y descuentos.`});
-      if(ticketProm>0) recomend.push({c:'analytics-good',t:`Ticket promedio: ${analyticsMoney(ticketProm)}. Usa productos complementarios para elevar el importe por operación.`});
-      if(variacion!==null) recomend.push({c:variacion>=0?'analytics-good':'analytics-danger',t:`Comparado con el periodo anterior: ${variacion>=0?'+':''}${analyticsPct(variacion)} en ventas (${analyticsMoney(prevTotal)} → ${analyticsMoney(total)}).`});
-      if(!recomend.length) recomend.push({c:'analytics-good',t:'No se detectaron alertas principales con los datos disponibles en este periodo.'});
-
-      if(!ventas.length){
-        cont.innerHTML=`<div class="analytics-section"><div class="analytics-title">Sin ventas en el periodo</div><div class="small">Del ${d1} al ${d2}. Puedes cambiar el rango o registrar ventas para activar el análisis.</div>
-        <div class="analytics-grid">
-          <div class="analytics-kpi"><div class="k-label">Inventario a costo</div><div class="k-value">${analyticsMoney(invValue)}</div></div>
-          <div class="analytics-kpi"><div class="k-label">Compras del periodo</div><div class="k-value">${analyticsMoney(comprasTotal)}</div></div>
-          <div class="analytics-kpi"><div class="k-label">Stock crítico</div><div class="k-value">${stockBajo.length}</div></div>
-          <div class="analytics-kpi"><div class="k-label">Productos sin venta</div><div class="k-value">${lento.length}</div></div>
-        </div></div>`;
+      let d1 = desde, d2 = hasta;
+      if(d1>d2){ const tmp=d1; d1=d2; d2=tmp; }
+      const cont = document.getElementById('repContenido');
+      cont.innerHTML = '';
+      if(!ST.ventas || !ST.ventas.length){
+        cont.innerHTML = '<div class="small">No hay ventas registradas.</div>';
+        return;
+      }
+      const lista = ST.ventas.filter(v=>v.fecha>=d1 && v.fecha<=d2 && v.estado!=='anulada');
+      if(!lista.length){
+        cont.innerHTML = '<div class="small">No hay ventas en este rango.</div>';
         return;
       }
 
-      let html=`<div class="analytics-section">
-        <div class="analytics-title">Resumen ejecutivo · ${d1} al ${d2}</div>
-        <div class="analytics-grid">
-          <div class="analytics-kpi"><div class="k-label">Ventas netas</div><div class="k-value">${analyticsMoney(total)}</div><div class="k-sub">${variacion===null?'Sin comparación':(variacion>=0?'+':'')+analyticsPct(variacion)+' vs. periodo anterior'}</div></div>
-          <div class="analytics-kpi"><div class="k-label">Tickets</div><div class="k-value">${tickets.toLocaleString('es-MX')}</div><div class="k-sub">Promedio ${analyticsMoney(ticketProm)} por ticket</div></div>
-          <div class="analytics-kpi"><div class="k-label">Utilidad bruta estimada</div><div class="k-value">${analyticsMoney(utilidad)}</div><div class="k-sub">Margen ${analyticsPct(margen)}</div></div>
-          <div class="analytics-kpi"><div class="k-label">Unidades vendidas</div><div class="k-value">${unidades.toLocaleString('es-MX')}</div><div class="k-sub">Costo vendido ${analyticsMoney(costoVentas)}</div></div>
-        </div>
-        <div class="analytics-grid">
-          <div class="analytics-kpi"><div class="k-label">Compras</div><div class="k-value">${analyticsMoney(comprasTotal)}</div><div class="k-sub">${comprasRango.length} registro(s)</div></div>
-          <div class="analytics-kpi"><div class="k-label">Inventario a costo</div><div class="k-value">${analyticsMoney(invValue)}</div><div class="k-sub">${(ST.productos||[]).length} productos</div></div>
-          <div class="analytics-kpi"><div class="k-label">Stock crítico</div><div class="k-value">${stockBajo.length}</div><div class="k-sub">${stockMedio.length} en alerta</div></div>
-          <div class="analytics-kpi"><div class="k-label">Ventas anuladas</div><div class="k-value">${anuladas.length}</div><div class="k-sub">${anuladas.reduce((a,v)=>a+(Number(v.total)||0),0)>0?analyticsMoney(anuladas.reduce((a,v)=>a+(Number(v.total)||0),0)):'Sin monto'}</div></div>
-        </div>
+      let total = 0;
+      let tickets = lista.length;
+      const porProducto = {};
+      const porMetodo = {};
+      const porUsuario = {};
+      let utilidadTotal = 0;
+
+      lista.forEach(v=>{
+        const totalVenta = v.total || 0;
+        total += totalVenta;
+        const metodo = v.metodo || 'Otro';
+        if(!porMetodo[metodo]) porMetodo[metodo] = {monto:0, tickets:0};
+        porMetodo[metodo].monto += totalVenta;
+        porMetodo[metodo].tickets += 1;
+
+        const usr = v.usuario || 'Sin usuario';
+        if(!porUsuario[usr]) porUsuario[usr] = {monto:0, tickets:0};
+        porUsuario[usr].monto += totalVenta;
+        porUsuario[usr].tickets += 1;
+
+        (v.items || []).forEach(it=>{
+          const prod = (ST.productos || []).find(p=>p.codigo===it.codigo) || {};
+          const costo = prod.costo || 0;
+          const ingresoItem = (it.qty||0) * (it.precio||0);
+          const costoItem = (it.qty||0) * costo;
+          const util = ingresoItem - costoItem;
+          utilidadTotal += util;
+
+          const clave = it.nombre || it.codigo || 'Producto sin nombre';
+          if(!porProducto[clave]) porProducto[clave] = {cant:0, ingreso:0, utilidad:0};
+          porProducto[clave].cant += it.qty||0;
+          porProducto[clave].ingreso += ingresoItem;
+          porProducto[clave].utilidad += util;
+        });
+      });
+
+      const top = Object.entries(porProducto)
+        .sort((a,b)=>b[1].ingreso-a[1].ingreso)
+        .slice(0,5);
+
+      let htmlRep = '';
+      htmlRep += `<div class="item">
+        <div class="item-main">Resumen de ventas</div>
+        <div class="small">Del ${d1} al ${d2}</div>
+        <div class="mt-4 small">Total vendido: <strong>$${total.toFixed(2)}</strong></div>
+        <div class="small">Tickets: <strong>${tickets}</strong></div>
+        <div class="small">Utilidad estimada: <strong>$${utilidadTotal.toFixed(2)}</strong></div>
       </div>`;
 
-      html+=`<div class="analytics-section"><div class="analytics-title">Tendencia de ventas por día</div>${analyticsRenderBars(porDia,'ventas',true)}</div>`;
-      html+=`<div class="analytics-section"><div class="analytics-title">Horas con más movimiento</div>${analyticsRenderMetricBars(horasActivas.sort((a,b)=>b.ventas-a.ventas).slice(0,12).map(x=>({label:x.label,value:x.ventas})),'label','value',true)}</div>`;
+      const metodosArr = Object.entries(porMetodo).sort((a,b)=>b[1].monto-a[1].monto);
+      if(metodosArr.length){
+        htmlRep += `<div class="item mt-4">
+          <div class="item-main">Ventas por método de pago</div>
+          <table class="mt-4">
+            <thead><tr><th>Método</th><th>Tickets</th><th class="text-right">Monto</th></tr></thead>
+            <tbody>
+              ${metodosArr.map(([met, d])=>`<tr><td>${met}</td><td>${d.tickets}</td><td class="text-right">$${d.monto.toFixed(2)}</td></tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+      }
 
-      html+=`<div class="analytics-section"><div class="analytics-title">Métodos de pago</div>${analyticsRenderMetricBars(pagoRows,'label','value',true)}
-        <div class="mt-4 small">${pagoRows.map(x=>`<span class="analytics-badge">${analyticsEsc(x.label)} · ${analyticsPct(total?x.value/total*100:0)}</span>`).join('')}</div></div>`;
+      const usuariosArr = Object.entries(porUsuario).sort((a,b)=>b[1].monto-a[1].monto);
+      if(usuariosArr.length){
+        htmlRep += `<div class="item mt-4">
+          <div class="item-main">Ventas por usuario</div>
+          <table class="mt-4">
+            <thead><tr><th>Usuario</th><th>Tickets</th><th class="text-right">Monto</th></tr></thead>
+            <tbody>
+              ${usuariosArr.map(([u, d])=>`<tr><td>${u}</td><td>${d.tickets}</td><td class="text-right">$${d.monto.toFixed(2)}</td></tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+      }
 
-      html+=`<div class="analytics-section"><div class="analytics-title">Productos que más venden</div><div class="analytics-table-wrap"><table class="analytics-table"><thead><tr><th>Producto</th><th>Unidades</th><th>Venta</th><th>Costo</th><th>Utilidad</th><th>Margen</th></tr></thead><tbody>
-        ${topIngreso.map(p=>`<tr><td>${analyticsEsc(p.nombre)}</td><td>${p.cant}</td><td>${analyticsMoney(p.ingreso)}</td><td>${analyticsMoney(p.costo)}</td><td>${analyticsMoney(p.utilidad)}</td><td>${analyticsPct(p.ingreso?p.utilidad/p.ingreso*100:0)}</td></tr>`).join('')}
-      </tbody></table></div></div>`;
+      if(top.length){
+        htmlRep += `<div class="item mt-4">
+          <div class="item-main">Top productos (por ingreso)</div>
+          <table class="mt-4">
+            <thead><tr><th>Producto</th><th>Cant.</th><th class="text-right">Ingreso</th><th class="text-right">Utilidad</th></tr></thead>
+            <tbody>
+              ${top.map(([nombre, d])=>`<tr><td>${nombre}</td><td>${d.cant}</td><td class="text-right">$${d.ingreso.toFixed(2)}</td><td class="text-right">$${d.utilidad.toFixed(2)}</td></tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+      }
 
-      html+=`<div class="analytics-section"><div class="analytics-title">Productos que más utilidad generan</div><div class="analytics-table-wrap"><table class="analytics-table"><thead><tr><th>Producto</th><th>Unidades</th><th>Venta</th><th>Utilidad</th><th>Margen</th></tr></thead><tbody>
-        ${topUtil.map(p=>`<tr><td>${analyticsEsc(p.nombre)}</td><td>${p.cant}</td><td>${analyticsMoney(p.ingreso)}</td><td>${analyticsMoney(p.utilidad)}</td><td>${analyticsPct(p.ingreso?p.utilidad/p.ingreso*100:0)}</td></tr>`).join('')}
-      </tbody></table></div></div>`;
-
-      html+=`<div class="analytics-section"><div class="analytics-title">Rendimiento por usuario</div><div class="analytics-table-wrap"><table class="analytics-table"><thead><tr><th>Usuario</th><th>Tickets</th><th>Venta</th><th>Ticket promedio</th></tr></thead><tbody>
-        ${userRows.map(x=>`<tr><td>${analyticsEsc(x.label)}</td><td>${x.tickets}</td><td>${analyticsMoney(x.value)}</td><td>${analyticsMoney(x.tickets?x.value/x.tickets:0)}</td></tr>`).join('')}
-      </tbody></table></div></div>`;
-
-      html+=`<div class="analytics-section"><div class="analytics-title">Clientes con mayor compra registrada</div><div class="analytics-table-wrap"><table class="analytics-table"><thead><tr><th>Cliente</th><th>Tickets</th><th>Total comprado</th><th>Promedio</th></tr></thead><tbody>
-        ${customerRows.length?customerRows.map(([name,x])=>`<tr><td>${analyticsEsc(name)}</td><td>${x.tickets}</td><td>${analyticsMoney(x.monto)}</td><td>${analyticsMoney(x.tickets?x.monto/x.tickets:0)}</td></tr>`).join(''):'<tr><td colspan="4">No hay ventas asociadas a clientes en este periodo.</td></tr>'}
-      </tbody></table></div></div>`;
-
-      html+=`<div class="analytics-section"><div class="analytics-title">Inventario y oportunidades</div>
-        <div class="analytics-table-wrap"><table class="analytics-table"><thead><tr><th>Producto</th><th>Stock</th><th>Costo</th><th>Valor stock</th><th>Margen actual</th><th>Estado</th></tr></thead><tbody>
-        ${(ST.productos||[]).slice().sort((a,b)=>(a.stock||0)-(b.stock||0)).slice(0,25).map(p=>{
-          const st=Number(p.stock)||0, cost=Number(p.costo)||0, price=Number(p.precio)||0, mg=price?((price-cost)/price*100):0;
-          const estado=st<=5?'CRÍTICO':st<=10?'ALERTA':'OK';
-          return `<tr><td>${analyticsEsc(p.nombre)}</td><td>${st}</td><td>${analyticsMoney(cost)}</td><td>${analyticsMoney(st*cost)}</td><td>${analyticsPct(mg)}</td><td>${estado}</td></tr>`;
-        }).join('')}
-        </tbody></table></div></div>`;
-
-      html+=`<div class="analytics-section"><div class="analytics-title">Recomendaciones automáticas</div>${recomend.map(r=>`<div class="analytics-alert ${r.c}">${r.t}</div>`).join('')}</div>`;
-
-      html+=`<div class="analytics-section"><div class="analytics-title">Cómo leer este panel</div><div class="small">
-        <strong>Utilidad bruta estimada</strong> = venta menos costo de los productos vendidos. 
-        Cuando una venta ya tiene costo guardado se usa ese costo; para ventas antiguas sin costo histórico se usa el costo actual del producto, por lo que esa parte es una estimación.
-        <br><strong>Inventario a costo</strong> muestra cuánto dinero tienes invertido aproximadamente en existencia.
-        <br><strong>Productos sin venta</strong> ayuda a detectar inventario que puede requerir promoción o revisión.
-      </div></div>`;
-
-      cont.innerHTML=html;
+      cont.innerHTML = htmlRep;
     }
-
-    function exportarAnaliticaCSV(){
-      const range=analyticsGetRange(), d1=range.d1,d2=range.d2;
-      const ventas=(ST.ventas||[]).filter(v=>v.fecha>=d1&&v.fecha<=d2&&v.estado!=='anulada');
-      const rows=[['Fecha','Hora','Usuario','Cliente','Método','Total','Código','Producto','Cantidad','Precio','Costo','Utilidad']];
-      ventas.forEach(v=>(v.items||[]).forEach(it=>{
-        const prod=ST.productos.find(p=>p.codigo===it.codigo)||{};
-        const costo=Number(typeof it.costo!=='undefined'?it.costo:prod.costo)||0;
-        const qty=Number(it.qty)||0, precio=Number(it.precio)||0;
-        rows.push([v.fecha,v.hora||'',v.usuario||'',v.clienteNombre||'',v.metodo||'',Number(v.total)||0,it.codigo||'',it.nombre||prod.nombre||'',qty,precio,costo,qty*(precio-costo)]);
-      }));
-      if(rows.length===1){showToast('No hay datos para exportar.');return;}
-      const csv=rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
-      const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
-      const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-      a.download=`analitica_pdv_${d1}_${d2}.csv`; document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-      showToast('CSV exportado.');
-    }
-
 
 function renderUsuarios(){
       const cont = document.getElementById('listaUsuarios');
@@ -4059,7 +3915,7 @@ TOTAL: $${(venta.total||0).toFixed(2)}`;
 }
 </style>
 
-<!-- SMARTAPPS: impresión de tickets + escáner de códigos v2 -->
+<!-- SMARTAPPS: impresión de tickets + escáner de códigos v3 - WebIntoApp bridge/local detection -->
 <style>/* impresión y escáner */</style>
 <script>
 (function(){
@@ -4090,7 +3946,21 @@ TOTAL: $${(venta.total||0).toFixed(2)}`;
 
   function esWebViewAndroid(){
     var ua=(navigator.userAgent||'').toLowerCase();
-    return /android/.test(ua) && (/(; wv\)|\bwv\b|webview)/.test(ua) || !/chrome|firefox|edg|opera/.test(ua));
+
+    // WebIntoApp puede usar el "System User-Agent", haciendo que el WebView
+    // se identifique como Chrome. Por eso no dependemos solamente del UA.
+    // El archivo HTML del APK también puede cargarse con file:// y WebIntoApp
+    // expone el puente Native cuando está disponible.
+    var webIntoBridge = (typeof window !== 'undefined' &&
+                         window.Native &&
+                         typeof window.Native.call === 'function');
+    var archivoLocal = (typeof location !== 'undefined' &&
+                        location.protocol === 'file:');
+    var androidWebview = /android/.test(ua) &&
+                         (/(; wv\)|\bwv\b|webview)/.test(ua) ||
+                          !/chrome|firefox|edg|opera/.test(ua));
+
+    return !!(webIntoBridge || archivoLocal || androidWebview);
   }
 
   function cerrarSmartTicket(){
@@ -4305,4 +4175,4 @@ TOTAL: $${(venta.total||0).toFixed(2)}`;
 </script>
 </div>
 </body>
-</html>
+  </html>
