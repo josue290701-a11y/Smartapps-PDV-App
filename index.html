@@ -37,15 +37,46 @@
     window.fbLogout = function(){ return signOut(auth); };
     window.firebaseListo = true;
   </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --bg: #F3F4F6;
+      --bg-card: #FFFFFF;
+      --bg-soft: #FBEDEC;
+      --bg-item: #F7F9FC;
+      --bg-table-head: #F1F3F7;
+      --text: #1D2126;
+      --text-muted: #5B6270;
+      --border: #E3E6EA;
+      --accent: #E52420;
+      --accent-text: #FFFFFF;
+      --shadow: 0 2px 6px rgba(0,0,0,0.08);
+      --font-body: 'Inter', Arial, Helvetica, sans-serif;
+      --font-display: 'Space Grotesk', 'Inter', Arial, sans-serif;
+    }
+    [data-theme="dark"]{
+      --bg: #131417;
+      --bg-card: #1C1F24;
+      --bg-soft: #2A1B1A;
+      --bg-item: #23262B;
+      --bg-table-head: #23262B;
+      --text: #ECEDEF;
+      --text-muted: #9AA0A9;
+      --border: #33373D;
+      --accent: #FF4B46;
+      --accent-text: #FFFFFF;
+      --shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
     body{
-      font-family: Arial, Helvetica, sans-serif;
-      background:#f5f5f5;
-      color:#222;
+      font-family: var(--font-body);
+      background:var(--bg);
+      color:var(--text);
       min-height:100vh;
       display:flex;
       flex-direction:column;
+      transition: background .2s ease, color .2s ease;
     }
     .app-root{
       max-width:1100px;
@@ -55,22 +86,24 @@
     }
     h1{
       text-align:center;
-      color:#E52420;
+      color:var(--accent);
+      font-family:var(--font-display);
+      font-weight:600;
       font-size:1.5rem;
       margin-bottom:4px;
     }
     .subtitle{
       text-align:center;
       font-size:0.85rem;
-      color:#555;
+      color:var(--text-muted);
       margin-bottom:10px;
     }
     .card{
-      background:#fff;
+      background:var(--bg-card);
       border-radius:12px;
       padding:10px;
       margin-bottom:10px;
-      box-shadow:0 2px 6px rgba(0,0,0,0.08);
+      box-shadow:var(--shadow);
     }
     .card-header{
       display:flex;
@@ -80,18 +113,19 @@
       margin-bottom:6px;
     }
     .card-title{
-      font-weight:bold;
-      color:#E52420;
+      font-weight:600;
+      font-family:var(--font-display);
+      color:var(--accent);
       font-size:0.95rem;
     }
     .small{
       font-size:0.78rem;
-      color:#555;
+      color:var(--text-muted);
     }
     label{
       display:block;
       font-size:0.8rem;
-      color:#555;
+      color:var(--text-muted);
       margin-top:6px;
     }
     input, select, textarea{
@@ -99,8 +133,11 @@
       padding:7px 9px;
       margin-top:3px;
       border-radius:8px;
-      border:1px solid #ccc;
+      border:1px solid var(--border);
+      background:var(--bg-card);
+      color:var(--text);
       font-size:0.85rem;
+      font-family:var(--font-body);
       outline:none;
       resize:vertical;
     }
@@ -108,8 +145,8 @@
       border-radius:999px;
     }
     input:focus, select:focus, textarea:focus{
-      border-color:#E52420;
-      box-shadow:0 0 0 1px rgba(26,115,232,0.15);
+      border-color:var(--accent);
+      box-shadow:0 0 0 1px rgba(229,36,32,0.15);
     }
     button{
       border:none;
@@ -117,16 +154,18 @@
       padding:7px 12px;
       font-size:0.8rem;
       cursor:pointer;
-      background:#E52420;
-      color:#fff;
+      background:var(--accent);
+      color:var(--accent-text);
       white-space:nowrap;
+      font-family:var(--font-body);
+      font-weight:600;
     }
     button:active{
       transform:scale(0.97);
     }
     .btn-ghost{
-      background:#e3f2fd;
-      color:#E52420;
+      background:var(--bg-soft);
+      color:var(--accent);
     }
     .btn-danger{
       background:#D32F2F;
@@ -166,12 +205,12 @@
       width:100%;
       text-align:left;
       margin-bottom:6px;
-      background:#e3f2fd;
-      color:#E52420;
+      background:var(--bg-soft);
+      color:var(--accent);
     }
     .nav-btn.active{
-      background:#E52420;
-      color:#fff;
+      background:var(--accent);
+      color:var(--accent-text);
     }
     .pill-row{
       display:flex;
@@ -182,16 +221,19 @@
     .pill{
       padding:2px 8px;
       border-radius:999px;
-      background:#f1f3f7;
+      background:var(--bg-table-head);
+      color:var(--text);
       font-size:0.72rem;
+      font-family:var(--font-display);
+      font-variant-numeric:tabular-nums;
     }
     .tag{
       display:inline-block;
       padding:2px 8px;
       border-radius:999px;
       font-size:0.7rem;
-      background:#e3f2fd;
-      color:#E52420;
+      background:var(--bg-soft);
+      color:var(--accent);
     }
     table{
       width:100%;
@@ -200,11 +242,12 @@
     }
     th, td{
       padding:4px 6px;
-      border-bottom:1px solid #eee;
+      border-bottom:1px solid var(--border);
       text-align:left;
+      color:var(--text);
     }
     th{
-      background:#f1f3f7;
+      background:var(--bg-table-head);
       font-weight:bold;
     }
     .text-right{text-align:right;}
@@ -235,7 +278,7 @@
       }
     }
     .item{
-      background:#f7f9fc;
+      background:var(--bg-item);
       border-radius:8px;
       padding:6px 8px;
       margin-bottom:6px;
@@ -248,6 +291,57 @@
     .item-main{
       font-weight:bold;
     }
+
+    /* ---- Topbar / menú desplegable ---- */
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:8px;
+    }
+    .topbar-titles{ flex:1; }
+    .topbar-titles h1{ text-align:left; margin-bottom:0; }
+    .topbar-titles .subtitle{ text-align:left; margin-bottom:0; }
+    .topbar-actions{ display:flex; align-items:center; gap:8px; }
+    .theme-toggle{
+      display:flex; align-items:center; gap:6px;
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:999px; padding:5px 10px; cursor:pointer;
+      color:var(--text); font-size:0.75rem;
+    }
+    .menu-btn{
+      background:var(--bg-card);
+      color:var(--accent);
+      border:1px solid var(--border);
+      font-size:1rem;
+      padding:7px 12px;
+    }
+    .nav-dropdown{
+      position:relative;
+    }
+    .nav-panel{
+      display:none;
+      position:absolute;
+      top:calc(100% + 6px);
+      left:0;
+      z-index:40;
+      background:var(--bg-card);
+      border:1px solid var(--border);
+      border-radius:12px;
+      box-shadow:0 8px 24px rgba(0,0,0,0.18);
+      padding:8px;
+      min-width:200px;
+    }
+    .nav-panel.open{ display:block; }
+    .nav-panel .nav-btn{ margin-bottom:4px; }
+    .nav-overlay{
+      display:none;
+      position:fixed; inset:0;
+      background:rgba(0,0,0,0.15);
+      z-index:30;
+    }
+    .nav-overlay.open{ display:block; }
     .status-pill{
       display:inline-block;
       padding:2px 8px;
@@ -350,18 +444,12 @@
       font-size:.72rem;
       margin-right:4px;
     }
-    @media(max-width:700px){
-      .layout{flex-direction:column;}
-      .sidebar{max-width:none; display:flex; flex-wrap:wrap;}
-      .nav-btn{flex:1; text-align:center;}
-    }
-
     /* ===== SMART ANALYTICS ===== */
     .analytics-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px;}
-    .analytics-kpi{background:#f7f9fc;border:1px solid #edf0f4;border-radius:10px;padding:10px;}
-    .analytics-kpi .k-label{font-size:.72rem;color:#666;}
-    .analytics-kpi .k-value{font-size:1.18rem;font-weight:800;margin-top:2px;color:#222;}
-    .analytics-kpi .k-sub{font-size:.7rem;color:#666;margin-top:2px;}
+    .analytics-kpi{background:var(--bg-item);border:1px solid var(--border);border-radius:10px;padding:10px;}
+    .analytics-kpi .k-label{font-size:.72rem;color:var(--text-muted);}
+    .analytics-kpi .k-value{font-size:1.18rem;font-weight:800;margin-top:2px;color:var(--text);font-family:var(--font-display);font-variant-numeric:tabular-nums;}
+    .analytics-kpi .k-sub{font-size:.7rem;color:var(--text-muted);margin-top:2px;}
     .analytics-positive{color:#2e7d32!important}.analytics-negative{color:#c62828!important}
     .analytics-toolbar{display:flex;flex-wrap:wrap;gap:6px;align-items:end}
     .analytics-toolbar .field{flex:1;min-width:125px}
@@ -400,8 +488,15 @@
   </div>
 
   <div class="app-root" id="appRoot" style="display:none;">
-    <h1>SMARTAPPS <span style='color:#E52420'>PDV</span></h1>
-    <div class="subtitle">Punto de venta profesional · SMARTAPPS</div>
+    <div class="topbar">
+      <div class="topbar-titles">
+        <h1>SMARTAPPS <span style='color:var(--accent)'>PDV</span></h1>
+        <div class="subtitle">Punto de venta profesional · SMARTAPPS</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="theme-toggle" id="btnTema" onclick="toggleTema()">🌙 <span id="lblTema">Oscuro</span></button>
+      </div>
+    </div>
 
     <!-- LOGIN -->
     <div id="loginView" class="card">
@@ -432,6 +527,22 @@
       <div class="card">
         <div class="card-header">
           <div class="card-title">Panel principal</div>
+          <div class="nav-dropdown">
+            <button class="menu-btn" id="btnMenu" onclick="toggleMenu()">☰ Menú</button>
+            <div class="nav-panel" id="navPanel">
+              <button id="btnNavVentas" class="nav-btn active" data-section="ventas" onclick="navTo('ventas', this)">Ventas</button>
+              <button id="btnNavClientes" class="nav-btn" data-section="clientes" onclick="navTo('clientes', this)">Clientes</button>
+              <button id="btnNavProductos" class="nav-btn" data-section="productos" onclick="navTo('productos', this)">Productos</button>
+              <button id="btnNavCompras" class="nav-btn" data-section="compras" onclick="navTo('compras', this)">Compras</button>
+              <button id="btnNavProveedores" class="nav-btn" data-section="proveedores" onclick="navTo('proveedores', this)">Proveedores</button>
+              <button id="btnNavCaja" class="nav-btn" data-section="caja" onclick="navTo('caja', this)">Caja</button>
+              <button id="btnNavHistorial" class="nav-btn" data-section="historial" onclick="navTo('historial', this)">Historial</button>
+              <button id="btnNavReportes" class="nav-btn" data-section="reportes" onclick="navTo('reportes', this)">Reportes</button>
+              <button id="btnNavUsuarios" class="nav-btn" data-section="usuarios" onclick="navTo('usuarios', this)">Usuarios</button>
+              <button id="btnNavConfig" class="nav-btn" data-section="config" onclick="navTo('config', this)">Config. del ticket</button>
+              <button class="nav-btn" onclick="logout()">Cambiar de usuario</button>
+            </div>
+          </div>
           <div class="small">
             Usuario: <span id="lblUserName"></span> · Puesto: <span id="lblUserRole"></span>
           </div>
@@ -442,22 +553,9 @@
           <span class="pill">Tickets hoy: <span id="lblTicketsHoy">0</span></span>
         </div>
       </div>
+      <div class="nav-overlay" id="navOverlay" onclick="toggleMenu(false)"></div>
 
       <div class="layout">
-        <!-- SIDEBAR -->
-        <div class="sidebar">
-          <button id="btnNavVentas" class="nav-btn active" data-section="ventas" onclick="navTo('ventas', this)">Ventas</button>
-          <button id="btnNavClientes" class="nav-btn" data-section="clientes" onclick="navTo('clientes', this)">Clientes</button>
-          <button id="btnNavProductos" class="nav-btn" data-section="productos" onclick="navTo('productos', this)">Productos</button>
-          <button id="btnNavCompras" class="nav-btn" data-section="compras" onclick="navTo('compras', this)">Compras</button>
-          <button id="btnNavProveedores" class="nav-btn" data-section="proveedores" onclick="navTo('proveedores', this)">Proveedores</button>
-          <button id="btnNavCaja" class="nav-btn" data-section="caja" onclick="navTo('caja', this)">Caja</button>
-          <button id="btnNavHistorial" class="nav-btn" data-section="historial" onclick="navTo('historial', this)">Historial</button>
-          <button id="btnNavReportes" class="nav-btn" data-section="reportes" onclick="navTo('reportes', this)">Reportes</button>
-          <button id="btnNavUsuarios" class="nav-btn" data-section="usuarios" onclick="navTo('usuarios', this)">Usuarios</button>
-          <button class="nav-btn" onclick="logout()">Cambiar de usuario</button>
-        </div>
-
         <!-- MAIN CONTENT -->
 
 
@@ -901,6 +999,57 @@
               <div class="list" id="listaUsuarios"></div>
             </div>
           </div>
+
+          <!-- CONFIG DEL TICKET -->
+          <div id="sec-config" class="card" style="display:none;">
+            <div class="card-header">
+              <div class="card-title">Configuración del ticket</div>
+              <div class="small">Así se ve tu ticket impreso y el de tus cortes de caja.</div>
+            </div>
+            <div class="row">
+              <div class="col-2">
+                <label>Nombre del negocio</label>
+                <input id="cfgNombre" placeholder="Ej. Abarrotes La Esquina">
+              </div>
+              <div class="col-2">
+                <label>Texto debajo del nombre</label>
+                <input id="cfgSubtitulo" placeholder="Ej. Tu tienda de confianza">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-2">
+                <label>Teléfono (opcional)</label>
+                <input id="cfgTelefono" placeholder="Ej. 871 986 1544">
+              </div>
+              <div class="col-2">
+                <label>Dirección (opcional)</label>
+                <input id="cfgDireccion" placeholder="Ej. Calle 5 de Mayo #123">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-2">
+                <label>Mensaje de despedida</label>
+                <input id="cfgFooter" placeholder="Ej. Gracias por su compra">
+              </div>
+            </div>
+            <div class="row mt-4">
+              <div class="col-2">
+                <label>Logo del ticket (opcional, imagen pequeña)</label>
+                <input id="cfgLogoFile" type="file" accept="image/*" onchange="cargarLogoTicket(this)">
+              </div>
+              <div class="col-2">
+                <label>&nbsp;</label>
+                <button class="btn-ghost" type="button" onclick="quitarLogoTicket()">Quitar logo</button>
+              </div>
+            </div>
+            <div class="mt-4" id="cfgLogoPreviewWrap" style="display:none;">
+              <div class="small">Vista previa del logo</div>
+              <img id="cfgLogoPreview" style="max-height:60px;margin-top:4px;">
+            </div>
+            <div class="mt-8">
+              <button onclick="guardarConfig()">Guardar configuración</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1138,7 +1287,15 @@
       clientes: [],
       proveedores: [],
       compras: [],
-      ajustesInventario: []
+      ajustesInventario: [],
+      config: {
+        nombreNegocio: 'SMARTAPPS',
+        subtitulo: 'PDV · Punto de venta',
+        telefono: '',
+        direccion: '',
+        mensajeFooter: 'Gracias por su compra',
+        logoDataUrl: ''
+      }
     };
     let currentUser = null;
     let carrito = [];
@@ -1204,6 +1361,7 @@
             if(remoto.compras) ST.compras = remoto.compras;
             if(remoto.clientes) ST.clientes = remoto.clientes;
             if(remoto.proveedores) ST.proveedores = remoto.proveedores;
+            if(remoto.config) ST.config = Object.assign({}, ST.config, remoto.config);
             cargadoDesdeNube = true;
             try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(ST)); }catch(e){}
           }
@@ -1223,6 +1381,7 @@
           if(obj.compras) ST.compras = obj.compras;
           if(obj.clientes) ST.clientes = obj.clientes;
           if(obj.proveedores) ST.proveedores = obj.proveedores;
+          if(obj.config) ST.config = Object.assign({}, ST.config, obj.config);
         }
       }catch(e){}
       }
@@ -1825,7 +1984,7 @@ function appLogin(){
     }
 
     function navTo(section, btn){
-      const sections = ['ventas','clientes','productos','compras','proveedores','caja','historial','reportes','usuarios'];
+      const sections = ['ventas','clientes','productos','compras','proveedores','caja','historial','reportes','usuarios','config'];
       sections.forEach(id=>{
         const el = document.getElementById('sec-'+id);
         if(el) el.style.display = (id===section)?'block':'none';
@@ -1833,6 +1992,7 @@ function appLogin(){
       const navBtns = document.querySelectorAll('.nav-btn[data-section]');
       navBtns.forEach(b=>b.classList.remove('active'));
       if(btn) btn.classList.add('active');
+      toggleMenu(false);
       if(section === 'historial'){
         llenarFiltroHistorial();
         renderHistorialVentas();
@@ -1855,8 +2015,34 @@ function appLogin(){
       }else if(section === 'reportes'){
         analyticsPreset(30);
         calcularReportes();
+      }else if(section === 'config'){
+        cargarFormConfig();
       }
     }
+
+    function toggleMenu(forzar){
+      const panel = document.getElementById('navPanel');
+      const overlay = document.getElementById('navOverlay');
+      if(!panel) return;
+      const abrir = (typeof forzar === 'boolean') ? forzar : !panel.classList.contains('open');
+      panel.classList.toggle('open', abrir);
+      if(overlay) overlay.classList.toggle('open', abrir);
+    }
+
+    function toggleTema(forzar){
+      const dark = (typeof forzar === 'boolean') ? forzar : document.documentElement.getAttribute('data-theme') !== 'dark';
+      document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+      try{ localStorage.setItem('smartapps_tema', dark ? 'dark' : 'light'); }catch(e){}
+      const lbl = document.getElementById('lblTema');
+      const btnT = document.getElementById('btnTema');
+      if(lbl) lbl.textContent = dark ? 'Claro' : 'Oscuro';
+      if(btnT) btnT.firstChild.textContent = dark ? '☀️ ' : '🌙 ';
+    }
+    (function initTema(){
+      let guardado = null;
+      try{ guardado = localStorage.getItem('smartapps_tema'); }catch(e){}
+      if(guardado === 'dark') toggleTema(true);
+    })();
 
     
     function handleVentaBuscarKey(e){
@@ -3031,6 +3217,50 @@ function renderUsuarios(){
       document.getElementById('usrActivo').value = 'true';
     }
 
+    function cargarFormConfig(){
+      const c = ST.config || {};
+      document.getElementById('cfgNombre').value = c.nombreNegocio || '';
+      document.getElementById('cfgSubtitulo').value = c.subtitulo || '';
+      document.getElementById('cfgTelefono').value = c.telefono || '';
+      document.getElementById('cfgDireccion').value = c.direccion || '';
+      document.getElementById('cfgFooter').value = c.mensajeFooter || '';
+      const wrap = document.getElementById('cfgLogoPreviewWrap');
+      const img = document.getElementById('cfgLogoPreview');
+      if(c.logoDataUrl){
+        img.src = c.logoDataUrl;
+        wrap.style.display = 'block';
+      }else{
+        wrap.style.display = 'none';
+      }
+    }
+    function cargarLogoTicket(input){
+      const file = input.files && input.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e){
+        ST.config.logoDataUrl = e.target.result;
+        document.getElementById('cfgLogoPreview').src = e.target.result;
+        document.getElementById('cfgLogoPreviewWrap').style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+    function quitarLogoTicket(){
+      ST.config.logoDataUrl = '';
+      document.getElementById('cfgLogoPreviewWrap').style.display = 'none';
+      const inp = document.getElementById('cfgLogoFile');
+      if(inp) inp.value = '';
+    }
+    function guardarConfig(){
+      ST.config = ST.config || {};
+      ST.config.nombreNegocio = (document.getElementById('cfgNombre').value||'').trim() || 'SMARTAPPS';
+      ST.config.subtitulo = (document.getElementById('cfgSubtitulo').value||'').trim();
+      ST.config.telefono = (document.getElementById('cfgTelefono').value||'').trim();
+      ST.config.direccion = (document.getElementById('cfgDireccion').value||'').trim();
+      ST.config.mensajeFooter = (document.getElementById('cfgFooter').value||'').trim() || 'Gracias por su compra';
+      saveData();
+      showToast('Configuración del ticket guardada.');
+    }
+
     function guardarUsuario(){
       if(!currentUser || currentUser.rolSistema!=='admin'){
         showToast('Solo el Admin puede gestionar usuarios.');
@@ -4177,6 +4407,22 @@ TOTAL: $${(venta.total||0).toFixed(2)}`;
     return false;
   }
 
+  function ticketEncabezado(subtituloDefault){
+    var c = (typeof ST!=='undefined' && ST.config) ? ST.config : {};
+    var nombre = c.nombreNegocio || 'SMARTAPPS';
+    var sub = c.subtitulo || subtituloDefault;
+    var logo = c.logoDataUrl ? '<div class="center"><img src="'+c.logoDataUrl+'" style="max-height:50px;margin-bottom:4px;"></div>' : '';
+    var contacto = '';
+    if(c.telefono) contacto += '<div class="center small">Tel: '+esc(c.telefono)+'</div>';
+    if(c.direccion) contacto += '<div class="center small">'+esc(c.direccion)+'</div>';
+    return logo+'<div class="center title">'+esc(nombre)+'</div><div class="center subtitle">'+esc(sub)+'</div>'+contacto;
+  }
+  function ticketPie(){
+    var c = (typeof ST!=='undefined' && ST.config) ? ST.config : {};
+    var msg = c.mensajeFooter || 'Gracias por su compra';
+    var nombre = c.nombreNegocio || 'SMARTAPPS PDV';
+    return esc(msg)+'<br>'+esc(nombre)+' · '+esc(nowText());
+  }
   function ventaTicket(v){
     if(!v) return '';
     var items=(v.items||[]).map(function(it){
@@ -4190,11 +4436,11 @@ TOTAL: $${(venta.total||0).toFixed(2)}`;
       else if(v.metodo==='Mixto') extra='<div class="rowline"><span>Efectivo</span><span>'+money(v.detallePago.efectivo)+'</span></div><div class="rowline"><span>Tarjeta</span><span>'+money(v.detallePago.tarjeta)+'</span></div>';
     }
     return '<div class="ticket">'+
-      '<div class="center title">SMARTAPPS</div><div class="center subtitle">PDV · TICKET DE VENTA</div>'+
+      ticketEncabezado('TICKET DE VENTA')+
       '<div class="line"></div><div><b>Ticket:</b> '+esc(v.id)+'</div><div><b>Fecha:</b> '+esc(v.fecha)+' '+esc(v.hora||'')+'</div><div><b>Cajero:</b> '+esc(v.usuario||'-')+'</div><div><b>Cliente:</b> '+esc(v.clienteNombre||'Sin cliente')+'</div>'+
       '<div class="line"></div><table>'+items+'</table><div class="line"></div>'+
       '<div class="rowline big"><span>TOTAL</span><span>'+money(v.total)+'</span></div>'+extra+ '<div class="rowline"><span>Pago</span><span>'+esc(pago)+'</span></div>'+
-      '<div class="footer">Gracias por su compra<br>SMARTAPPS PDV · '+esc(nowText())+'</div></div>';
+      '<div class="footer">'+ticketPie()+'</div></div>';
   }
 
   function corteSnapshot(tipo){
@@ -4217,7 +4463,7 @@ TOTAL: $${(venta.total||0).toFixed(2)}`;
     var esZ=d.tipo==='Z';
     var rows=Object.keys(d.por).map(function(k){return d.por[k]>0?'<div class="rowline"><span>'+esc(k)+'</span><span>'+money(d.por[k])+'</span></div>':''}).join('');
     return '<div class="ticket">'+
-      '<div class="center title">SMARTAPPS</div><div class="center subtitle">PDV · CORTE '+esc(d.tipo)+'</div><div class="line"></div>'+
+      ticketEncabezado('CORTE '+esc(d.tipo))+'<div class="line"></div>'+
       '<div><b>Fecha:</b> '+esc(d.fecha)+' '+esc(d.hora)+'</div><div><b>Tipo:</b> '+(esZ?'Cierre de día':'Consulta')+'</div>'+
       '<div class="line"></div><div class="rowline"><span>Apertura</span><span>'+money(d.apertura)+'</span></div><div class="rowline"><span>Ventas efectivo</span><span>'+money(d.ventasEfectivo)+'</span></div><div class="rowline"><span>Ingresos extra</span><span>'+money(d.ingresos)+'</span></div><div class="rowline"><span>Egresos</span><span>-'+money(d.egresos)+'</span></div>'+
       '<div class="line"></div><div class="rowline big"><span>SALDO CAJA</span><span>'+money(d.saldo)+'</span></div>'+
