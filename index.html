@@ -696,6 +696,8 @@
               <button id="btnNavCaja" class="nav-btn" data-section="caja" onclick="navTo('caja', this)">Caja</button>
               <button id="btnNavHistorial" class="nav-btn" data-section="historial" onclick="navTo('historial', this)">Historial</button>
               <button id="btnNavReportes" class="nav-btn" data-section="reportes" onclick="navTo('reportes', this)">Reportes</button>
+              <button id="btnNavBitacora" class="nav-btn" data-section="bitacora" onclick="navTo('bitacora', this)">Bitácora</button>
+              <button id="btnNavRespaldo" class="nav-btn" data-section="respaldo" onclick="navTo('respaldo', this)">Respaldos / Excel</button>
               <button id="btnNavUsuarios" class="nav-btn" data-section="usuarios" onclick="navTo('usuarios', this)">Usuarios</button>
               <button id="btnNavPromos" class="nav-btn" data-section="promos" onclick="navTo('promos', this)">Promociones</button>
               <button id="btnNavConfig" class="nav-btn" data-section="config" onclick="navTo('config', this)">Config. del ticket</button>
@@ -989,6 +991,71 @@
                   <div class="small">Historial de compras</div>
                   <div class="list" id="listaCompras"></div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BITÁCORA -->
+          <div id="sec-bitacora" class="card" style="display:none;">
+            <div class="card-header">
+              <div class="card-title">Bitácora</div>
+              <div class="small">Quién hizo qué, cuándo y en qué caja. No se puede editar ni borrar desde el sistema.</div>
+            </div>
+            <div class="row">
+              <div class="col-2"><label>Desde</label><input id="btDesde" type="date" onchange="renderBitacora()"></div>
+              <div class="col-2"><label>Hasta</label><input id="btHasta" type="date" onchange="renderBitacora()"></div>
+              <div class="col-2"><label>Usuario</label><select id="btUsuario" onchange="renderBitacora()"></select></div>
+              <div class="col-2"><label>Tipo</label><select id="btTipo" onchange="renderBitacora()"></select></div>
+            </div>
+            <div class="row mt-4">
+              <input id="btBuscar" placeholder="Buscar texto (ticket, producto, cliente...)" oninput="renderBitacora()">
+              <button class="btn-ghost" onclick="exportarBitacoraCSV()">Descargar CSV</button>
+            </div>
+            <div class="small mt-4" id="btResumen"></div>
+            <div class="list fit-fill" id="listaBitacora"></div>
+          </div>
+
+          <!-- RESPALDOS Y EXCEL -->
+          <div id="sec-respaldo" class="card" style="display:none;">
+            <div class="card-header">
+              <div class="card-title">Respaldos y Excel</div>
+              <div class="small">Copias de tu información guardadas fuera de Firebase.</div>
+            </div>
+            <div class="list fit-fill">
+              <div class="item">
+                <div class="item-main">Respaldo completo</div>
+                <div class="small">Un archivo con ventas, productos, clientes, usuarios, cortes, merma y bitácora. Guárdalo en una USB o envíalo a tu correo. Contiene los PIN de los usuarios: cuídalo.</div>
+                <div class="mt-4"><button onclick="descargarRespaldoCompleto()">Descargar respaldo (.json)</button></div>
+              </div>
+              <div class="item">
+                <div class="item-main">Excel</div>
+                <div class="small">Libro de Excel con ventas, detalle de ventas, inventario, clientes con saldo, compras y merma/remisiones.</div>
+                <div class="mt-4"><button onclick="descargarExcel()">Descargar Excel (.xlsx)</button></div>
+              </div>
+              <div class="item">
+                <div class="item-main">Respaldo automático (app de escritorio)</div>
+                <div class="small" id="respaldoAutoEstado"></div>
+                <div class="row mt-4">
+                  <div class="col-2">
+                    <label>Respaldo automático diario</label>
+                    <select id="cfgRespaldoAuto"><option value="1">Activado</option><option value="0">Desactivado</option></select>
+                  </div>
+                  <div class="col-2">
+                    <label>Hora</label>
+                    <input id="cfgRespaldoHora" type="time" value="23:30">
+                  </div>
+                </div>
+                <div class="mt-4" style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <button class="btn-ghost" onclick="guardarConfigRespaldo()">Guardar</button>
+                  <button class="btn-ghost" id="btnRespaldoAhora" onclick="respaldoAhora()">Respaldar ahora</button>
+                  <button class="btn-ghost" id="btnRespaldoCarpeta" onclick="abrirCarpetaRespaldos()">Abrir carpeta de respaldos</button>
+                </div>
+                <div class="small mt-4">Se guarda un archivo por día en Documentos → SmartApps-Respaldos y se conservan los últimos 30.</div>
+              </div>
+              <div class="item" id="bloqueRestaurar">
+                <div class="item-main">Restaurar desde un respaldo (solo Admin)</div>
+                <div class="small">Reemplaza ventas, productos, clientes y demás datos por los del archivo. Antes de restaurar se guarda una copia de lo que hay ahora. Todas las computadoras se actualizan solas.</div>
+                <div class="mt-4"><input id="respaldoArchivo" type="file" accept=".json,.gz" onchange="leerArchivoRespaldo(this)"></div>
               </div>
             </div>
           </div>
@@ -1701,6 +1768,20 @@
     </div>
   </div>
 
+  <!-- MODAL RESTAURAR RESPALDO -->
+  <div id="modalRestaurarBg" class="modal-bg">
+    <div class="modal">
+      <h2>Restaurar respaldo</h2>
+      <div class="modal-text" id="restaurarResumen"></div>
+      <div class="modal-text"><strong>Esto reemplaza los datos actuales de TODAS las computadoras.</strong> Antes se guardará una copia de lo que hay ahora. Escribe RESTAURAR para continuar.</div>
+      <input id="restaurarConfirma" placeholder="RESTAURAR" autocomplete="off">
+      <div class="modal-buttons">
+        <button class="btn-ghost" onclick="cerrarRestauracion()">Cancelar</button>
+        <button class="btn-danger" onclick="confirmarRestauracion()">Restaurar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL NUEVO CLIENTE RÁPIDO -->
   <div id="modalClienteBg" class="modal-bg">
     <div class="modal">
@@ -1845,6 +1926,7 @@
       cortes: [],
       remisiones: [],
       mermas: [],
+      bitacora: [],
       config: {
         nombreNegocio: 'SMARTAPPS',
         subtitulo: 'PDV · Punto de venta',
@@ -1853,7 +1935,9 @@
         mensajeFooter: 'Gracias por su compra',
         logoDataUrl: '',
         corteZAutoActivo: true,
-        corteZAutoHora: '23:00'
+        corteZAutoHora: '23:00',
+        respaldoAutoActivo: true,
+        respaldoAutoHora: '23:30'
       }
     };
     let currentUser = null;
@@ -1898,6 +1982,7 @@
       };
       pushMovimientoCaja(movZ);
       archivarCorte(snapZ, 'Z', movZ.numMov, {auto: !!opc.auto});
+      logBitacora('corte', 'Corte Z N° ' + movZ.numMov + (opc.auto ? ' (automático)' : ''), opc.auto ? {usuario:'Automático'} : {});
       ST.caja.abierta = false;
       saveData();
       renderCaja();
@@ -2112,6 +2197,7 @@
           {n:'cortes',      path:'cortes',      pre:'z_', id:'id', cont:[], anid:[], get:g('cortes'), set:s('cortes'), orden:true},
           {n:'remisiones',  path:'remisiones',  pre:'rm_', id:'id', cont:[], anid:[], get:g('remisiones'), set:s('remisiones')},
           {n:'mermas',      path:'mermas',      pre:'mm_', id:'id', cont:[], anid:[], get:g('mermas'), set:s('mermas')},
+          {n:'bitacora',    path:'bitacora',    pre:'b_', id:'id', cont:[], anid:[], get:g('bitacora'), set:s('bitacora'), orden:true},
           // Caja propia de esta computadora: solo se escribe (la fuente de verdad es la copia local)
           {n:'cajaMov', path:'cajas/' + tid + '/movimientos', pre:'x_', id:null, cont:[], anid:[], orden:true, local:true,
             get:function(){ if(!ST.caja) ST.caja = {abierta:false, fecha:null, apertura:0, movimientos:[]}; if(!Array.isArray(ST.caja.movimientos)) ST.caja.movimientos = []; return ST.caja.movimientos; },
@@ -2739,6 +2825,7 @@
       const nombre = (document.getElementById('terminalNombre').value || '').trim();
       if(!nombre){ showToast('Escribe un nombre para esta computadora.'); return; }
       if(TERMINAL && _terminalRenombrando){
+        logBitacora('equipo','Equipo renombrado: ' + TERMINAL.nombre + ' → ' + nombre);
         TERMINAL.nombre = nombre;
       }else if(!TERMINAL){
         TERMINAL = {id:'t' + Date.now().toString(36).slice(-5) + Math.random().toString(36).slice(2, 5), nombre:nombre};
@@ -2820,6 +2907,7 @@
       if(c.has('compras')) paso(function(){ renderCompras(); });
       if(c.has('ajustes')) paso(function(){ renderAjustesInventario(); });
       if(c.has('remisiones') || c.has('mermas')) paso(function(){ renderMerma(); });
+      if(c.has('bitacora')) paso(function(){ if(_seccionVisible('bitacora')) renderBitacora(); });
       if(c.has('cortes')) paso(function(){ if(document.getElementById('modalCortesBg').style.display === 'flex') renderCortesLista(); });
       if(c.has('promociones')){
         paso(function(){ renderProductosVenta(); if(_seccionVisible('promos')) renderPromociones(); });
@@ -2841,7 +2929,7 @@
         const raw = localStorage.getItem(STORAGE_KEY);
         if(raw){
           const obj = JSON.parse(raw);
-          ['productos','ventas','usuarios','compras','clientes','proveedores','promociones','ajustesInventario','terminales','cortes','remisiones','mermas'].forEach(function(k){
+          ['productos','ventas','usuarios','compras','clientes','proveedores','promociones','ajustesInventario','terminales','cortes','remisiones','mermas','bitacora'].forEach(function(k){
             if(Array.isArray(obj[k])) ST[k] = obj[k];
           });
           if(obj.caja && typeof obj.caja === 'object') ST.caja = obj.caja;
@@ -2882,6 +2970,7 @@
       if(!ST.cortes) ST.cortes = [];
       if(!ST.remisiones) ST.remisiones = [];
       if(!ST.mermas) ST.mermas = [];
+      if(!ST.bitacora) ST.bitacora = [];
       if(!ST.caja || typeof ST.caja !== 'object') ST.caja = {abierta:false, fecha:null, apertura:0, movimientos:[]};
       if(!Array.isArray(ST.caja.movimientos)) ST.caja.movimientos = [];
       ST.clientes.forEach(fixCliente);
@@ -3005,6 +3094,7 @@
       if(codEl) codEl.value = '';
       if(cantEl) cantEl.value = '';
       if(notaEl) notaEl.value = '';
+      logBitacora('inventario','Ajuste de '+(tipo==='entrada'?'entrada':'salida')+': '+prod.nombre+' '+(tipo==='entrada'?'+':'-')+cantidad+' → stock '+nuevoStock+' ('+motivo+(nota?', '+nota:'')+')');
       showToast('Ajuste aplicado.');
     }
 
@@ -3239,6 +3329,7 @@ function limpiarFiltroClientes(){
       // Refrescar detalle y lista de clientes
       abrirDetalleCliente(cli.id);
       renderClientesLista();
+      logBitacora('abono','Abono de $'+monto.toFixed(2)+' de '+(cli.nombre||'')+' ('+metodo+')');
       showToast('Abono registrado.');
     }
 
@@ -3420,6 +3511,8 @@ function saveData(){
         ['sec_compras','Compras'],
         ['sec_proveedores','Proveedores'],
         ['sec_merma','Merma y remisiones'],
+        ['sec_bitacora','Bitácora'],
+        ['sec_respaldo','Respaldos y Excel'],
         ['sec_caja','Caja'],
         ['sec_historial','Historial de ventas'],
         ['sec_reportes','Reportes'],
@@ -3461,12 +3554,12 @@ function saveData(){
     ];
     const SECCION_PERMISO = {
       clientes:'sec_clientes', productos:'sec_productos', compras:'sec_compras',
-      proveedores:'sec_proveedores', merma:'sec_merma', caja:'sec_caja', historial:'sec_historial',
+      proveedores:'sec_proveedores', merma:'sec_merma', bitacora:'sec_bitacora', respaldo:'sec_respaldo', caja:'sec_caja', historial:'sec_historial',
       reportes:'sec_reportes', promos:'sec_promos', config:'sec_config', usuarios:'sec_usuarios'
     };
     const NAV_SECCION_ID = {
       clientes:'btnNavClientes', productos:'btnNavProductos', compras:'btnNavCompras',
-      proveedores:'btnNavProveedores', merma:'btnNavMerma', caja:'btnNavCaja', historial:'btnNavHistorial',
+      proveedores:'btnNavProveedores', merma:'btnNavMerma', bitacora:'btnNavBitacora', respaldo:'btnNavRespaldo', caja:'btnNavCaja', historial:'btnNavHistorial',
       reportes:'btnNavReportes', promos:'btnNavPromos', config:'btnNavConfig', usuarios:'btnNavUsuarios'
     };
 
@@ -3647,8 +3740,16 @@ function saveData(){
         return;
       }
       if(!permisosDraft) return;
+      const cambiosP = [];
+      ROLES_PERMISOS.forEach(function(r){
+        PERMISOS_DEF.forEach(function(g){ g.items.forEach(function(it){
+          const a = !!(ST.permisos[r.id] && ST.permisos[r.id][it[0]]), b = !!(permisosDraft[r.id] && permisosDraft[r.id][it[0]]);
+          if(a !== b) cambiosP.push(r.nombre + ': ' + it[1] + ' ' + (b ? 'sí' : 'no'));
+        }); });
+      });
       ST.permisos = permisosDraft;
       asegurarPermisos();
+      if(cambiosP.length) logBitacora('permisos', 'Permisos modificados: ' + cambiosP.slice(0, 12).join('; ') + (cambiosP.length > 12 ? ' (y ' + (cambiosP.length - 12) + ' más)' : ''));
       saveData();
       cerrarPermisosRoles();
       showToast('Permisos guardados.');
@@ -3678,9 +3779,11 @@ function appLogin(){
       refreshAll();
       aplicarPermisos();
       showToast('Bienvenido, '+currentUser.nombre);
+      logBitacora('sesion','Inicio de sesión');
     }
 
     function logout(){
+      if(currentUser) logBitacora('sesion','Cierre de sesión');
       currentUser = null;
       carrito = [];
       try{ sessionStorage.removeItem('smartpos_current_user'); }catch(e){}
@@ -3723,6 +3826,7 @@ function appLogin(){
         return;
       }
       const cambio = !currentUser || currentUser.id !== u.id;
+      const anteriorNombre = currentUser ? currentUser.nombre : '';
       currentUser = {id:u.id, nombre:u.nombre, rolSistema:u.rolSistema, puesto:u.puesto || u.rolSistema};
       try{ sessionStorage.setItem('smartpos_current_user', u.id); }catch(e){}
       document.getElementById('lblUserName').textContent = currentUser.nombre;
@@ -3730,6 +3834,7 @@ function appLogin(){
       cerrarCambioUsuario();
       refreshAll();
       aplicarPermisos();     // la venta en curso se conserva; cambian los permisos y quién aparece en el ticket
+      if(cambio) logBitacora('cambio_usuario', 'Cambio de usuario: ' + anteriorNombre + ' → ' + currentUser.nombre);
       showToast(cambio ? ('Ahora cobra: ' + currentUser.nombre) : ('Sigues con: ' + currentUser.nombre));
     }
 
@@ -3962,6 +4067,7 @@ function appLogin(){
       renderCaja(); renderDashboard(); renderProductos(); renderProductosVenta();
       if(document.getElementById('modalVentaBg').style.display === 'flex') verDetalleVenta(venta.id);
       renderHistorialVentas();
+      logBitacora('devolucion','Ticket '+venta.id+': '+lineas.map(function(l){ return l.qty+' × '+l.nombre; }).join(', ')+' = $'+monto.toFixed(2)+' ('+rec.motivo+', '+metodoTexto+')',{ref:venta.id});
       if(typeof window.imprimirDevolucion === 'function') window.imprimirDevolucion(rec, venta);
       showToast('Devolución registrada por $' + monto.toFixed(2) + '.');
     }
@@ -4006,6 +4112,8 @@ function appLogin(){
     }
     function reimprimirCorte(id){
       if(!requierePermiso('caja_cortes', 'reimprimir cortes')) return;
+      const cAud = (ST.cortes || []).find(function(x){ return x.id === id; });
+      logBitacora('reimpresion','Reimpresión del corte ' + (cAud ? cAud.tipo + ' N° ' + cAud.numMov + ' (' + cAud.caja + ', ' + cAud.fecha + ')' : id));
       if(typeof window.reimprimirCorteArchivado === 'function') window.reimprimirCorteArchivado(id);
       else showToast('La impresión no está disponible en este equipo.');
     }
@@ -4102,6 +4210,7 @@ function appLogin(){
       mrCancelar();
       renderMerma(); renderProductos(); renderProductosVenta();
       if(esRem && typeof window.imprimirRemision === 'function') window.imprimirRemision(rec);
+      logBitacora(esRem ? 'remision' : 'merma', (esRem ? 'Remisión R-' : 'Merma M-') + rec.folio + (esRem ? ' a ' + rec.proveedor : '') + ' (' + rec.motivo + '): ' + rec.items.map(function(i){ return i.qty + ' × ' + i.nombre; }).join(', ') + ' = $' + rec.totalCosto.toFixed(2) + ' a costo');
       showToast((esRem ? 'Remisión R-' : 'Merma M-') + rec.folio + ' registrada. Se descontó del inventario.');
     }
     function marcarRemisionEntregada(id){
@@ -4110,6 +4219,7 @@ function appLogin(){
       if(!r) return;
       r.estado = r.estado === 'Entregada' ? 'Pendiente' : 'Entregada';
       r.entregada = r.estado === 'Entregada' ? fechaLocal() : '';
+      logBitacora('remision','Remisión R-' + r.folio + ' marcada como ' + r.estado);
       saveData();
       renderMerma();
     }
@@ -4157,9 +4267,405 @@ function appLogin(){
       renderMerma();
     }
 
+    /* ===================== BITÁCORA (registro de acciones importantes) ===================== */
+    const BITACORA_TIPOS = {
+      sesion:'Sesión', cambio_usuario:'Cambio de usuario', caja:'Caja', retiro:'Retiro de seguridad', corte:'Cortes',
+      venta_anulada:'Venta anulada', devolucion:'Devolución', producto:'Productos', inventario:'Ajuste de inventario',
+      compra:'Compra', abono:'Abono de crédito', usuario:'Usuarios', permisos:'Permisos', config:'Configuración',
+      merma:'Merma', remision:'Remisión', respaldo:'Respaldo', equipo:'Equipo', promocion:'Promociones', reimpresion:'Reimpresión'
+    };
+    function escHTML(s){
+      return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    // Anota quién hizo qué, cuándo y en qué caja. Nadie puede editarlo ni borrarlo desde el sistema.
+    function logBitacora(tipo, detalle, extra){
+      try{
+        extra = extra || {};
+        if(!Array.isArray(ST.bitacora)) ST.bitacora = [];
+        const ahora = new Date();
+        const rec = {
+          id:'BT' + ahora.getTime() + String(Math.floor(Math.random() * 90) + 10),
+          fecha: fechaLocal(ahora), hora: ahora.toTimeString().slice(0, 5),
+          usuario: extra.usuario ? extra.usuario : (currentUser ? currentUser.nombre : 'Sistema'),
+          usuarioId: currentUser ? currentUser.id : '',
+          caja: TERMINAL ? TERMINAL.nombre : '', terminal: TERMINAL ? TERMINAL.id : '',
+          tipo: tipo, detalle: String(detalle || '').slice(0, 300)
+        };
+        if(typeof extra.ref !== 'undefined') rec.ref = String(extra.ref);
+        ST.bitacora.push(rec);
+        saveData();
+      }catch(e){ console.error('bitácora', e); }
+    }
+    function abrirSeccionBitacora(){
+      const hoy = fechaLocal();
+      const d = document.getElementById('btDesde'), h = document.getElementById('btHasta');
+      if(d && !d.value){ const antes = new Date(); antes.setDate(antes.getDate() - 7); d.value = fechaLocal(antes); }
+      if(h && !h.value) h.value = hoy;
+      const selT = document.getElementById('btTipo');
+      if(selT){
+        const previo = selT.value;
+        selT.innerHTML = '<option value="">Todos los tipos</option>' + Object.keys(BITACORA_TIPOS).map(function(k){ return '<option value="' + k + '">' + BITACORA_TIPOS[k] + '</option>'; }).join('');
+        if(previo) selT.value = previo;
+      }
+      const selU = document.getElementById('btUsuario');
+      if(selU){
+        const previo = selU.value;
+        const nombres = {};
+        (ST.bitacora || []).forEach(function(r){ if(r.usuario) nombres[r.usuario] = 1; });
+        selU.innerHTML = '<option value="">Todos los usuarios</option>' + Object.keys(nombres).sort().map(function(n){ return '<option value="' + escHTML(n) + '">' + escHTML(n) + '</option>'; }).join('');
+        if(previo) selU.value = previo;
+      }
+      renderBitacora();
+    }
+    function bitacoraFiltrada(){
+      const g = function(id){ const e = document.getElementById(id); return e ? (e.value || '') : ''; };
+      const desde = g('btDesde'), hasta = g('btHasta'), usu = g('btUsuario'), tipo = g('btTipo'), q = g('btBuscar').trim().toLowerCase();
+      return (ST.bitacora || []).filter(function(r){
+        if(desde && r.fecha < desde) return false;
+        if(hasta && r.fecha > hasta) return false;
+        if(usu && r.usuario !== usu) return false;
+        if(tipo && r.tipo !== tipo) return false;
+        if(q && ((r.detalle || '') + ' ' + (r.usuario || '') + ' ' + (r.caja || '') + ' ' + (BITACORA_TIPOS[r.tipo] || r.tipo)).toLowerCase().indexOf(q) < 0) return false;
+        return true;
+      }).sort(function(a, b){ return a.id < b.id ? 1 : -1; });
+    }
+    function renderBitacora(){
+      const cont = document.getElementById('listaBitacora');
+      if(!cont) return;
+      const lista = bitacoraFiltrada();
+      const mostrar = lista.slice(0, 400);
+      cont.innerHTML = mostrar.length ? mostrar.map(function(r){
+        return '<div class="item"><div class="item-header"><div class="item-main">' + escHTML(BITACORA_TIPOS[r.tipo] || r.tipo) + '</div>' +
+          '<div class="small">' + escHTML(r.fecha) + ' ' + escHTML(r.hora || '') + '</div></div>' +
+          '<div class="small">' + escHTML(r.detalle) + '</div>' +
+          '<div class="small"><strong>' + escHTML(r.usuario || '') + '</strong>' + (r.caja ? ' · ' + escHTML(r.caja) : '') + '</div></div>';
+      }).join('') : '<div class="small">No hay movimientos con esos filtros.</div>';
+      const res = document.getElementById('btResumen');
+      if(res) res.textContent = lista.length + ' registro(s)' + (lista.length > mostrar.length ? ' (se muestran los 400 más recientes; usa los filtros o descarga el CSV)' : '');
+    }
+    function csvCelda(v){
+      const s = String(v == null ? '' : v);
+      return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }
+    function descargarBlob(nombre, blob){
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = nombre;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function(){ try{ document.body.removeChild(a); URL.revokeObjectURL(url); }catch(e){} }, 1500);
+    }
+    function exportarBitacoraCSV(){
+      if(!requierePermiso('sec_bitacora', 'exportar la bitácora')) return;
+      const filas = [['Fecha', 'Hora', 'Usuario', 'Caja', 'Tipo', 'Detalle']].concat(bitacoraFiltrada().map(function(r){
+        return [r.fecha, r.hora, r.usuario, r.caja, BITACORA_TIPOS[r.tipo] || r.tipo, r.detalle];
+      }));
+      const csv = '\uFEFF' + filas.map(function(f){ return f.map(csvCelda).join(','); }).join('\r\n');
+      descargarBlob('bitacora-' + fechaLocal() + '.csv', new Blob([csv], {type:'text/csv;charset=utf-8'}));
+    }
+
+    /* ===================== RESPALDOS ===================== */
+    const RESPALDO_ULTIMO_KEY = 'smartpos_respaldo_ultimo';
+    const RESPALDO_CLAVES = ['productos','ventas','clientes','proveedores','compras','ajustesInventario','promociones','usuarios','remisiones','mermas','cortes'];
+    function armarRespaldo(){
+      const datos = {};
+      RESPALDO_CLAVES.concat(['terminales', 'bitacora']).forEach(function(k){ datos[k] = ST[k] || []; });
+      datos.permisos = ST.permisos || {};
+      datos.config = ST.config || {};
+      datos.caja = ST.caja || {};
+      return {
+        app:'smartapps-pdv-respaldo', version:1, creado:new Date().toISOString(), fechaLocal:fechaLocal(),
+        equipo: TERMINAL ? TERMINAL.nombre : '', equipoId: TERMINAL ? TERMINAL.id : '',
+        datos: datos
+      };
+    }
+    function nombreRespaldo(prefijo, ext){
+      const a = new Date(), p = function(n){ return (n < 10 ? '0' : '') + n; };
+      const caja = (TERMINAL ? TERMINAL.nombre : 'equipo').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'equipo';
+      return prefijo + '-' + fechaLocal(a) + '-' + p(a.getHours()) + p(a.getMinutes()) + '-' + caja + ext;
+    }
+    function respaldoEscritorio(){ return !!(window.electronAPI && typeof window.electronAPI.guardarRespaldo === 'function'); }
+    function descargarRespaldoCompleto(){
+      if(!requierePermiso('sec_respaldo', 'descargar respaldos')) return;
+      const txt = JSON.stringify(armarRespaldo());
+      descargarBlob(nombreRespaldo('respaldo', '.json'), new Blob([txt], {type:'application/json'}));
+      logBitacora('respaldo', 'Respaldo completo descargado (' + (ST.ventas || []).length + ' ventas, ' + (ST.productos || []).length + ' productos)');
+      showToast('Respaldo descargado. Guárdalo en un lugar seguro (USB o correo).');
+    }
+    async function ejecutarRespaldoAutomatico(){
+      if(!respaldoEscritorio()) return false;
+      try{
+        const nombre = nombreRespaldo('respaldo', '.json.gz');
+        const r = await window.electronAPI.guardarRespaldo(nombre, JSON.stringify(armarRespaldo()));
+        const ahora = new Date();
+        const info = {fecha:fechaLocal(ahora), hora:ahora.toTimeString().slice(0, 5), archivo:nombre, ok: !!(r && r.ok), error: (r && r.error) || ''};
+        try{ localStorage.setItem(RESPALDO_ULTIMO_KEY, JSON.stringify(info)); }catch(e){}
+        if(info.ok) logBitacora('respaldo', 'Respaldo automático guardado en esta computadora: ' + nombre, {usuario:'Automático'});
+        actualizarEstadoRespaldo();
+        return info.ok;
+      }catch(e){ console.error('Respaldo automático', e); return false; }
+    }
+    let _respaldoEnCurso = false;
+    async function revisarRespaldoAutomatico(){
+      try{
+        if(_respaldoEnCurso || !respaldoEscritorio()) return;
+        const cfg = ST.config || {};
+        if(cfg.respaldoAutoActivo === false) return;
+        const hora = /^([01]?\d|2[0-3]):[0-5]\d$/.test(cfg.respaldoAutoHora || '') ? cfg.respaldoAutoHora : '23:30';
+        const hh = parseInt(hora.split(':')[0], 10), mm = parseInt(hora.split(':')[1], 10);
+        const ahora = new Date();
+        let ultimo = null;
+        try{ ultimo = JSON.parse(localStorage.getItem(RESPALDO_ULTIMO_KEY) || 'null'); }catch(e){}
+        const hoy = fechaLocal(ahora);
+        const limite = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), hh, mm, 0);
+        const ayer = new Date(); ayer.setDate(ayer.getDate() - 1);
+        const ultimaFecha = (ultimo && ultimo.ok) ? ultimo.fecha : '';
+        const toca = (ahora >= limite && ultimaFecha !== hoy) || (ultimaFecha < fechaLocal(ayer));   // a su hora, o si lleva 2+ días sin respaldo
+        if(!toca) return;
+        _respaldoEnCurso = true;
+        await ejecutarRespaldoAutomatico();
+        _respaldoEnCurso = false;
+      }catch(e){ _respaldoEnCurso = false; console.error(e); }
+    }
+    function iniciarRespaldoAutomatico(){
+      if(window.__respaldoTimer) return;
+      window.__respaldoTimer = setInterval(revisarRespaldoAutomatico, 60000);
+      setTimeout(revisarRespaldoAutomatico, 20000);
+    }
+    function actualizarEstadoRespaldo(){
+      const el = document.getElementById('respaldoAutoEstado');
+      if(!el) return;
+      if(!respaldoEscritorio()){
+        el.textContent = 'El respaldo automático solo funciona en la app de escritorio (Windows). Aquí usa "Descargar respaldo".';
+        return;
+      }
+      let ultimo = null;
+      try{ ultimo = JSON.parse(localStorage.getItem(RESPALDO_ULTIMO_KEY) || 'null'); }catch(e){}
+      el.textContent = ultimo
+        ? (ultimo.ok ? 'Último respaldo automático: ' + ultimo.fecha + ' ' + ultimo.hora + ' (' + ultimo.archivo + ')' : 'El último intento falló: ' + (ultimo.error || 'error desconocido'))
+        : 'Todavía no se ha hecho ningún respaldo automático en esta computadora.';
+    }
+    function abrirSeccionRespaldo(){
+      const c = ST.config || {};
+      const a = document.getElementById('cfgRespaldoAuto'), h = document.getElementById('cfgRespaldoHora');
+      if(a) a.value = c.respaldoAutoActivo === false ? '0' : '1';
+      if(h) h.value = c.respaldoAutoHora || '23:30';
+      const esc = respaldoEscritorio();
+      ['btnRespaldoAhora', 'btnRespaldoCarpeta'].forEach(function(id){ const b = document.getElementById(id); if(b) b.style.display = esc ? '' : 'none'; });
+      const rest = document.getElementById('bloqueRestaurar');
+      if(rest) rest.style.display = (currentUser && currentUser.rolSistema === 'admin') ? '' : 'none';
+      actualizarEstadoRespaldo();
+    }
+    function guardarConfigRespaldo(){
+      if(!requierePermiso('sec_respaldo', 'cambiar el respaldo automático')) return;
+      ST.config.respaldoAutoActivo = (document.getElementById('cfgRespaldoAuto').value !== '0');
+      const h = (document.getElementById('cfgRespaldoHora').value || '').trim();
+      ST.config.respaldoAutoHora = /^([01]?\d|2[0-3]):[0-5]\d$/.test(h) ? h : '23:30';
+      saveData();
+      logBitacora('config', 'Respaldo automático: ' + (ST.config.respaldoAutoActivo ? 'activado a las ' + ST.config.respaldoAutoHora : 'desactivado'));
+      showToast('Configuración de respaldo guardada.');
+    }
+    async function respaldoAhora(){
+      if(!requierePermiso('sec_respaldo', 'hacer respaldos')) return;
+      const ok = await ejecutarRespaldoAutomatico();
+      showToast(ok ? 'Respaldo guardado en la carpeta de respaldos de esta computadora.' : 'No se pudo guardar el respaldo.');
+    }
+    function abrirCarpetaRespaldos(){
+      if(window.electronAPI && typeof window.electronAPI.abrirCarpetaRespaldos === 'function') window.electronAPI.abrirCarpetaRespaldos();
+    }
+
+    /* ---- Restaurar (solo Admin) ---- */
+    let _respaldoPendiente = null;
+    function validarRespaldo(o){
+      return !!(o && o.app === 'smartapps-pdv-respaldo' && o.datos && Array.isArray(o.datos.productos) && Array.isArray(o.datos.ventas));
+    }
+    function resumenRespaldo(o){
+      const d = o.datos;
+      return 'Respaldo del ' + (o.fechaLocal || (o.creado || '').slice(0, 10)) + ' (equipo: ' + (o.equipo || '?') + '): ' +
+        d.productos.length + ' productos, ' + d.ventas.length + ' ventas, ' + (d.clientes || []).length + ' clientes, ' + (d.usuarios || []).length + ' usuarios.';
+    }
+    async function leerArchivoRespaldo(input){
+      if(!input || !input.files || !input.files[0]) return;
+      if(!currentUser || currentUser.rolSistema !== 'admin'){ showToast('Solo el Admin puede restaurar respaldos.'); return; }
+      const f = input.files[0];
+      try{
+        let texto;
+        if(/\.gz$/i.test(f.name)){
+          if(typeof DecompressionStream === 'undefined'){ showToast('Este equipo no puede abrir archivos .gz. Usa un respaldo .json.'); return; }
+          const flujo = f.stream().pipeThrough(new DecompressionStream('gzip'));
+          texto = await new Response(flujo).text();
+        }else{
+          texto = await f.text();
+        }
+        const obj = JSON.parse(texto);
+        if(!validarRespaldo(obj)){ showToast('Ese archivo no es un respaldo válido del PDV.'); return; }
+        prepararRestauracion(obj);
+      }catch(e){ console.error(e); showToast('No se pudo leer el archivo de respaldo.'); }
+      try{ input.value = ''; }catch(e){}
+    }
+    function prepararRestauracion(obj){
+      _respaldoPendiente = obj;
+      document.getElementById('restaurarResumen').textContent = resumenRespaldo(obj);
+      document.getElementById('restaurarConfirma').value = '';
+      document.getElementById('modalRestaurarBg').style.display = 'flex';
+    }
+    function cerrarRestauracion(){
+      document.getElementById('modalRestaurarBg').style.display = 'none';
+      _respaldoPendiente = null;
+    }
+    function confirmarRestauracion(){
+      if((document.getElementById('restaurarConfirma').value || '').trim().toUpperCase() !== 'RESTAURAR'){
+        showToast('Escribe la palabra RESTAURAR para confirmar.');
+        return;
+      }
+      const obj = _respaldoPendiente;
+      cerrarRestauracion();
+      restaurarDesdeObjeto(obj);
+    }
+    function restaurarDesdeObjeto(obj){
+      if(!currentUser || currentUser.rolSistema !== 'admin'){ showToast('Solo el Admin puede restaurar respaldos.'); return false; }
+      if(!validarRespaldo(obj)){ showToast('Ese archivo no es un respaldo válido del PDV.'); return false; }
+      // Antes de reemplazar nada, se guarda una copia de lo que hay ahora
+      try{
+        const previo = JSON.stringify(armarRespaldo());
+        if(respaldoEscritorio()) window.electronAPI.guardarRespaldo(nombreRespaldo('respaldo-antes-de-restaurar', '.json.gz'), previo);
+        else descargarBlob(nombreRespaldo('respaldo-antes-de-restaurar', '.json'), new Blob([previo], {type:'application/json'}));
+      }catch(e){ console.error('copia previa', e); }
+      RESPALDO_CLAVES.forEach(function(k){
+        if(Array.isArray(obj.datos[k])) ST[k] = JSON.parse(JSON.stringify(obj.datos[k]));
+      });
+      if(obj.datos.permisos && typeof obj.datos.permisos === 'object') ST.permisos = JSON.parse(JSON.stringify(obj.datos.permisos));
+      if(obj.datos.config && typeof obj.datos.config === 'object') ST.config = Object.assign({}, CONFIG_DEFAULT, obj.datos.config);
+      normalizarDatos();
+      registrarTerminalEnST();
+      if(SYNC) SYNC.guardar(true);
+      saveData();
+      logBitacora('respaldo', 'Se restauró un respaldo: ' + resumenRespaldo(obj));
+      try{ refreshAll(); aplicarPermisos(); }catch(e){ console.error(e); }
+      showToast('Respaldo restaurado. Las demás computadoras se actualizarán solas.');
+      return true;
+    }
+
+    /* ---- Excel (.xlsx) sin librerías externas ---- */
+    const _crcTabla = (function(){
+      const t = new Uint32Array(256);
+      for(let n = 0; n < 256; n++){ let c = n; for(let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; }
+      return t;
+    })();
+    function crc32(bytes){
+      let c = 0xFFFFFFFF;
+      for(let i = 0; i < bytes.length; i++) c = _crcTabla[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+      return (c ^ 0xFFFFFFFF) >>> 0;
+    }
+    function zipAlmacenado(archivos){
+      const enc = new TextEncoder(), partes = [], central = [];
+      let offset = 0;
+      archivos.forEach(function(f){
+        const nombre = enc.encode(f.nombre), datos = f.datos, crc = crc32(datos);
+        const lh = new Uint8Array(30 + nombre.length), dv = new DataView(lh.buffer);
+        dv.setUint32(0, 0x04034b50, true); dv.setUint16(4, 20, true); dv.setUint16(6, 0x0800, true); dv.setUint16(8, 0, true);
+        dv.setUint16(10, 0, true); dv.setUint16(12, 0x21, true); dv.setUint32(14, crc, true);
+        dv.setUint32(18, datos.length, true); dv.setUint32(22, datos.length, true); dv.setUint16(26, nombre.length, true); dv.setUint16(28, 0, true);
+        lh.set(nombre, 30);
+        partes.push(lh, datos);
+        const ch = new Uint8Array(46 + nombre.length), cv = new DataView(ch.buffer);
+        cv.setUint32(0, 0x02014b50, true); cv.setUint16(4, 20, true); cv.setUint16(6, 20, true); cv.setUint16(8, 0x0800, true);
+        cv.setUint16(10, 0, true); cv.setUint16(12, 0, true); cv.setUint16(14, 0x21, true); cv.setUint32(16, crc, true);
+        cv.setUint32(20, datos.length, true); cv.setUint32(24, datos.length, true); cv.setUint16(28, nombre.length, true);
+        cv.setUint16(30, 0, true); cv.setUint16(32, 0, true); cv.setUint16(34, 0, true); cv.setUint16(36, 0, true);
+        cv.setUint32(38, 0, true); cv.setUint32(42, offset, true);
+        ch.set(nombre, 46);
+        central.push(ch);
+        offset += lh.length + datos.length;
+      });
+      const tamCentral = central.reduce(function(a, c){ return a + c.length; }, 0);
+      const fin = new Uint8Array(22), fv = new DataView(fin.buffer);
+      fv.setUint32(0, 0x06054b50, true); fv.setUint16(4, 0, true); fv.setUint16(6, 0, true);
+      fv.setUint16(8, archivos.length, true); fv.setUint16(10, archivos.length, true);
+      fv.setUint32(12, tamCentral, true); fv.setUint32(16, offset, true); fv.setUint16(20, 0, true);
+      const out = new Uint8Array(offset + tamCentral + 22);
+      let p = 0;
+      partes.concat(central, [fin]).forEach(function(b){ out.set(b, p); p += b.length; });
+      return out;
+    }
+    function xmlSeguro(s){
+      return String(s == null ? '' : s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function letraColumna(n){ let s = ''; n++; while(n > 0){ const r = (n - 1) % 26; s = String.fromCharCode(65 + r) + s; n = Math.floor((n - 1) / 26); } return s; }
+    function xmlHoja(filas){
+      const anchos = [];
+      filas.forEach(function(f){ f.forEach(function(v, i){ const l = String(v == null ? '' : v).length; anchos[i] = Math.max(anchos[i] || 8, Math.min(l + 2, 50)); }); });
+      let x = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">';
+      if(anchos.length) x += '<cols>' + anchos.map(function(w, i){ return '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + w + '" customWidth="1"/>'; }).join('') + '</cols>';
+      x += '<sheetData>';
+      filas.forEach(function(f, r){
+        x += '<row r="' + (r + 1) + '">';
+        f.forEach(function(v, c){
+          const ref = letraColumna(c) + (r + 1), estilo = r === 0 ? ' s="1"' : '';
+          if(typeof v === 'number' && isFinite(v)) x += '<c r="' + ref + '"' + estilo + '><v>' + v + '</v></c>';
+          else if(v !== null && v !== undefined && v !== '') x += '<c r="' + ref + '"' + estilo + ' t="inlineStr"><is><t xml:space="preserve">' + xmlSeguro(v) + '</t></is></c>';
+        });
+        x += '</row>';
+      });
+      return x + '</sheetData></worksheet>';
+    }
+    function crearXLSX(hojas){
+      const enc = new TextEncoder();
+      const nombres = hojas.map(function(h, i){ return (String(h.nombre).replace(/[\[\]:*?\/\\]/g, ' ').slice(0, 31)) || ('Hoja' + (i + 1)); });
+      const archivos = [];
+      const add = function(nombre, texto){ archivos.push({nombre:nombre, datos:enc.encode(texto)}); };
+      add('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+        hojas.map(function(h, i){ return '<Override PartName="/xl/worksheets/sheet' + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'; }).join('') + '</Types>');
+      add('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>');
+      add('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' +
+        nombres.map(function(n, i){ return '<sheet name="' + xmlSeguro(n) + '" sheetId="' + (i + 1) + '" r:id="rId' + (i + 1) + '"/>'; }).join('') + '</sheets></workbook>');
+      add('xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+        hojas.map(function(h, i){ return '<Relationship Id="rId' + (i + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet' + (i + 1) + '.xml"/>'; }).join('') +
+        '<Relationship Id="rId' + (hojas.length + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>');
+      add('xl/styles.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>');
+      hojas.forEach(function(h, i){ add('xl/worksheets/sheet' + (i + 1) + '.xml', xmlHoja(h.filas)); });
+      return zipAlmacenado(archivos);
+    }
+    function hojasExcel(){
+      const netas = ventasNetas(ST.ventas || []);
+      const ventas = [['Fecha', 'Hora', 'Ticket', 'Caja', 'Cajero', 'Cliente', 'Método', 'Estado', 'Total', 'Devuelto', 'Neto']];
+      const detalle = [['Fecha', 'Ticket', 'Caja', 'Código', 'Producto', 'Cantidad', 'Precio', 'Costo', 'Importe']];
+      (ST.ventas || []).slice().sort(function(a, b){ return (a.fecha + (a.hora || '')) < (b.fecha + (b.hora || '')) ? -1 : 1; }).forEach(function(v){
+        const dev = Number(v.totalDevuelto) || 0, tot = Number(v.total) || 0;
+        ventas.push([v.fecha, v.hora || '', v.id, v.caja || '', v.usuario || '', v.clienteNombre || '', v.metodo || 'Efectivo', v.estado === 'anulada' ? 'Anulada' : 'Activa', tot, dev, v.estado === 'anulada' ? 0 : Math.round((tot - dev) * 100) / 100]);
+        if(v.estado !== 'anulada') (v.items || []).forEach(function(it){
+          detalle.push([v.fecha, v.id, v.caja || '', it.codigo, it.nombre, Number(it.qty) || 0, Number(it.precio) || 0, Number(it.costo) || 0, Math.round((Number(it.qty) || 0) * (Number(it.precio) || 0) * 100) / 100]);
+        });
+      });
+      const inv = [['Código', 'Producto', 'Costo', 'Precio', 'Stock', 'Valor a costo']];
+      (ST.productos || []).slice().sort(function(a, b){ return (a.nombre || '').localeCompare(b.nombre || ''); }).forEach(function(p){
+        inv.push([p.codigo, p.nombre, Number(p.costo) || 0, Number(p.precio) || 0, Number(p.stock) || 0, Math.round((Number(p.stock) || 0) * (Number(p.costo) || 0) * 100) / 100]);
+      });
+      const cli = [['Cliente', 'Teléfono', 'Saldo de crédito']];
+      (ST.clientes || []).forEach(function(c){ cli.push([c.nombre, c.telefono || '', Number(c.saldoCredito) || 0]); });
+      const comp = [['Fecha', 'Proveedor', 'Producto', 'Cantidad', 'Costo', 'Subtotal']];
+      (ST.compras || []).forEach(function(c){ (c.items || []).forEach(function(it){ comp.push([c.fecha, c.proveedor, it.nombre, Number(it.cantidad) || 0, Number(it.costo) || 0, Number(it.subtotal) || 0]); }); });
+      const mer = [['Tipo', 'Folio', 'Fecha', 'Proveedor', 'Motivo', 'Producto', 'Cantidad', 'Costo', 'Importe', 'Estado']];
+      (ST.mermas || []).concat(ST.remisiones || []).forEach(function(r){
+        (r.items || []).forEach(function(it){ mer.push([r.tipo === 'remision' ? 'Remisión' : 'Merma', r.folio, r.fecha, r.proveedor || '', r.motivo || '', it.nombre, Number(it.qty) || 0, Number(it.costo) || 0, Math.round((Number(it.qty) || 0) * (Number(it.costo) || 0) * 100) / 100, r.estado || '']); });
+      });
+      return [{nombre:'Ventas', filas:ventas}, {nombre:'Detalle de ventas', filas:detalle}, {nombre:'Inventario', filas:inv},
+              {nombre:'Clientes', filas:cli}, {nombre:'Compras', filas:comp}, {nombre:'Merma y remisiones', filas:mer}];
+    }
+    function descargarExcel(){
+      if(!requierePermiso('sec_respaldo', 'descargar el Excel')) return;
+      try{
+        const bytes = crearXLSX(hojasExcel());
+        descargarBlob('smartapps-' + fechaLocal() + '.xlsx', new Blob([bytes], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+        logBitacora('respaldo', 'Excel descargado (ventas, inventario, clientes, compras, merma)');
+        showToast('Excel descargado.');
+      }catch(e){ console.error(e); showToast('No se pudo generar el Excel.'); }
+    }
+
     function navTo(section, btn){
       if(currentUser && !puedeSeccion(section)){ showToast('No tienes permiso para abrir esa sección.'); return; }
-      const sections = ['ventas','clientes','productos','compras','proveedores','merma','caja','historial','reportes','usuarios','promos','config'];
+      const sections = ['ventas','clientes','productos','compras','proveedores','merma','caja','historial','reportes','usuarios','promos','config','bitacora','respaldo'];
       sections.forEach(id=>{
         const el = document.getElementById('sec-'+id);
         if(el) el.style.display = (id===section)?'flex':'none';
@@ -4197,6 +4703,10 @@ function appLogin(){
         cargarFormConfig();
       }else if(section === 'merma'){
         abrirSeccionMerma();
+      }else if(section === 'bitacora'){
+        abrirSeccionBitacora();
+      }else if(section === 'respaldo'){
+        abrirSeccionRespaldo();
       }
     }
 
@@ -4714,6 +5224,8 @@ function appLogin(){
         showToast('Ese código ya existe: ' + prod.nombre + '. Búscalo y edítalo si quieres cambiarlo.');
         return;
       }
+      const eraNuevo = !prod;
+      const antes = prod ? {nombre:prod.nombre, precio:prod.precio, costo:prod.costo, stock:prod.stock} : null;
       if(!prod){
         prod = {codigo,nombre,precio:precio,costo:(can('prod_costos') ? (costo||0) : 0),stock:stock||0};
         ST.productos.push(prod);
@@ -4724,6 +5236,16 @@ function appLogin(){
         prod.stock = stock;
       }
       editandoProductoCodigo = null;
+      if(eraNuevo){
+        logBitacora('producto','Producto nuevo: '+nombre+' (#'+codigo+') precio $'+precio.toFixed(2)+', stock '+(stock||0));
+      }else{
+        const cambios = [];
+        if(antes.nombre !== prod.nombre) cambios.push('nombre "'+antes.nombre+'" → "'+prod.nombre+'"');
+        if((antes.precio||0) !== (prod.precio||0)) cambios.push('precio $'+(antes.precio||0).toFixed(2)+' → $'+(prod.precio||0).toFixed(2));
+        if((antes.costo||0) !== (prod.costo||0)) cambios.push('costo $'+(antes.costo||0).toFixed(2)+' → $'+(prod.costo||0).toFixed(2));
+        if((antes.stock||0) !== (prod.stock||0)) cambios.push('stock '+(antes.stock||0)+' → '+(prod.stock||0));
+        if(cambios.length) logBitacora('producto','Producto '+prod.nombre+' (#'+codigo+'): '+cambios.join('; '));
+      }
       saveData();
       renderProductos();
       renderProductosVenta();
@@ -4751,7 +5273,9 @@ function appLogin(){
     }
     function eliminarProducto(codigo){
       if(!requierePermiso('prod_eliminar','eliminar productos')) return;
+      const pElim = ST.productos.find(p=>p.codigo===codigo);
       ST.productos = ST.productos.filter(p=>p.codigo!==codigo);
+      if(pElim) logBitacora('producto','Producto eliminado: '+pElim.nombre+' (#'+codigo+', stock '+(pElim.stock||0)+')');
       saveData();
       renderProductos();
       renderProductosVenta();
@@ -4891,6 +5415,7 @@ function appLogin(){
         }))
       };
       ST.compras.push(compra);
+      logBitacora('compra','Compra a '+proveedor+' por $'+total.toFixed(2)+' ('+compraActual.length+' producto(s))');
       saveData();
       compraActual = [];
       renderCompraActual();
@@ -4945,6 +5470,7 @@ function appLogin(){
       saveData();
       renderCaja();
       renderDashboard();
+      logBitacora('caja','Apertura de caja con $' + monto.toFixed(2));
       showToast('Caja abierta.');
     }
 
@@ -4978,6 +5504,7 @@ function appLogin(){
         usuario: (typeof currentUser!=='undefined' && currentUser) ? currentUser.nombre : ''
       };
       pushMovimientoCaja(movObj);
+      logBitacora('caja',(tipo==='egreso'?'Egreso':'Ingreso')+' de $'+Math.abs(monto).toFixed(2)+': '+concepto);
       document.getElementById('cajaMovMonto').value='';
       document.getElementById('cajaMovConcepto').value='';
       document.getElementById('cajaMovTipo').value='ingreso';
@@ -5161,6 +5688,7 @@ function appLogin(){
       if(bg) bg.style.display = 'none';
       bloqueoRetiroSeguridad = false;
       if(typeof window.imprimirRetiro === 'function') window.imprimirRetiro(movObj);
+      logBitacora('retiro','Retiro de seguridad folio '+folio+': $'+monto.toFixed(2)+' (quedan $'+(saldo-monto).toFixed(2)+' en caja)');
       showToast('Retiro de seguridad registrado. Folio: '+folio+' — N° '+movObj.numMov);
     }
 
@@ -5540,6 +6068,7 @@ function renderUsuarios(){
       const horaZ = (document.getElementById('cfgCorteZHora').value || '').trim();
       ST.config.corteZAutoHora = /^([01]?\d|2[0-3]):[0-5]\d$/.test(horaZ) ? horaZ : '23:00';
       saveData();
+      logBitacora('config','Configuración del ticket y de los cortes modificada');
       showToast('Configuración guardada.');
     }
 
@@ -5652,6 +6181,7 @@ function renderUsuarios(){
       promo.activa = activa;
 
       saveData();
+      logBitacora('promocion','Promoción guardada');
       showToast('Promoción guardada.');
       limpiarFormPromocion();
       renderPromociones();
@@ -5675,6 +6205,7 @@ function renderUsuarios(){
     function eliminarPromocion(id){
       if(!confirm('¿Eliminar esta promoción?')) return;
       ST.promociones = (ST.promociones||[]).filter(p=>p.id!==id);
+      logBitacora('promocion','Promoción eliminada');
       saveData();
       renderPromociones();
       showToast('Promoción eliminada.');
@@ -5819,6 +6350,7 @@ function renderUsuarios(){
       promo.activa = activa;
 
       saveData();
+      logBitacora('promocion','Combo guardado');
       showToast('Combo guardado.');
       limpiarFormCombo();
       renderPromociones();
@@ -5927,6 +6459,7 @@ function renderUsuarios(){
       usuario.pin = pin;
       usuario.activo = activo;
 
+      logBitacora('usuario',(id?'Usuario editado':'Usuario nuevo')+': '+nombre+' ('+rolSistema+', '+(activo?'activo':'inactivo')+')');
       saveData();
       renderUsuarios();
       populateLoginUsers();
@@ -6135,6 +6668,7 @@ function renderUsuarios(){
       renderDashboard();
       renderHistorialVentas();
       cerrarModalVenta();
+      logBitacora('venta_anulada','Ticket '+venta.id+' anulado por $'+(venta.total||0).toFixed(2)+(venta.usuario?' (cobró '+venta.usuario+')':''),{ref:venta.id});
       showToast('Venta anulada y stock devuelto.');
     }
 
@@ -6661,6 +7195,7 @@ function renderConsultaPrecioF6(){
       selMetodo.addEventListener('change', actualizarUICobro);
       configurarAtajosSmartApps();
       iniciarCorteZAutomatico();
+      iniciarRespaldoAutomatico();
     }
   </script>
 
@@ -7281,7 +7816,7 @@ function renderConsultaPrecioF6(){
     }
     var d=corteSnapshot(tipo);
     d.numMov=numMov;
-    if(tipo==='X' && typeof archivarCorte==='function'){ archivarCorte(d,'X',numMov,{}); if(typeof saveData==='function') saveData(); }
+    if(tipo==='X' && typeof archivarCorte==='function'){ archivarCorte(d,'X',numMov,{}); if(typeof logBitacora==='function') logBitacora('corte','Corte X N° '+numMov); if(typeof saveData==='function') saveData(); }
     openPrint(corteTicket(d));
   }
   window.imprimirTicketVenta=imprimirTicketVenta;
